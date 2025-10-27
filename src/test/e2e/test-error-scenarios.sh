@@ -14,7 +14,7 @@ start_test_suite "Error Scenarios (E2E)"
 run_test "Missing prerequisites are caught early" bash -c '
   cd "$TMP_TEST_DIR"
 
-  output=$(make -f "$(pwd)/Makefile" all 2>&1 || true)
+  output=$(make -f "$(pwd)/src/main/Makefile" all 2>&1 || true)
   exit_code=$?
 
   assert_exit_code 1 $exit_code "Should fail"
@@ -30,7 +30,7 @@ run_test "Invalid JSON is detected" bash -c '
 
   # Prerequisites should pass (file exists)
   # But jq parsing will fail
-  output=$(make -f "$(pwd)/Makefile" check-prereqs 2>&1 || true)
+  output=$(make -f "$(pwd)/src/main/Makefile" check-prereqs 2>&1 || true)
 
   # Note: check-prereqs validates file existence, not JSON validity
   # JSON errors will be caught during actual parsing
@@ -45,7 +45,7 @@ run_test "Missing template files are caught" bash -c '
   # Create templates dir but missing files
   mkdir -p "$TMP_TEST_DIR/templates"
 
-  output=$(make -f "$(pwd)/Makefile" check-prereqs 2>&1 || true)
+  output=$(make -f "$(pwd)/src/main/Makefile" check-prereqs 2>&1 || true)
   exit_code=$?
 
   assert_exit_code 1 $exit_code "Should fail"
@@ -65,9 +65,9 @@ run_test "Empty teams array" bash -c '
 }
 EOF
 
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
-  output=$(make -f "$(pwd)/Makefile" teams DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" teams DRY_RUN=1 2>&1)
   exit_code=$?
 
   # Should succeed (no teams to create)
@@ -87,9 +87,9 @@ run_test "Empty projects array" bash -c '
 }
 EOF
 
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
-  output=$(make -f "$(pwd)/Makefile" repos DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" repos DRY_RUN=1 2>&1)
   exit_code=$?
 
   # Should succeed (no repos to create)
@@ -108,7 +108,7 @@ EOF
 
   copy_test_config "config-minimal.json"
 
-  output=$(make -f "$(pwd)/Makefile" check-prereqs 2>&1 || true)
+  output=$(make -f "$(pwd)/src/main/Makefile" check-prereqs 2>&1 || true)
   exit_code=$?
 
   assert_exit_code 1 $exit_code "Should fail"

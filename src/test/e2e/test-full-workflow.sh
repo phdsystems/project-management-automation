@@ -15,11 +15,11 @@ run_test "Complete workflow in dry-run mode" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-minimal.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
 
-  output=$(make -f "$(pwd)/Makefile" all DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" all DRY_RUN=1 2>&1)
   exit_code=$?
 
   assert_exit_code 0 $exit_code "Should complete successfully"
@@ -38,11 +38,11 @@ run_test "Full workflow with multiple projects" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-full.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
 
-  output=$(make -f "$(pwd)/Makefile" all DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" all DRY_RUN=1 2>&1)
   exit_code=$?
 
   assert_exit_code 0 $exit_code "Should complete successfully"
@@ -65,13 +65,13 @@ run_test "Workflow handles user account gracefully" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-user"
   copy_test_config "config-minimal.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="User"
 
   # Teams stage should handle user account
   # (In real scenario, prerequisites should catch this)
-  output=$(make -f "$(pwd)/Makefile" teams 2>&1 || true)
+  output=$(make -f "$(pwd)/src/main/Makefile" teams 2>&1 || true)
 
   # User accounts cannot list teams, so API calls will fail
   # This is expected behavior that should be caught in prerequisites
@@ -83,17 +83,17 @@ run_test "Idempotent workflow (run twice)" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-minimal.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
   export MOCK_TEAM_EXISTS="false"
 
   # First run
-  output1=$(make -f "$(pwd)/Makefile" teams DRY_RUN=1 2>&1)
+  output1=$(make -f "$(pwd)/src/main/Makefile" teams DRY_RUN=1 2>&1)
 
   # Second run (teams exist now)
   export MOCK_TEAM_EXISTS="true"
-  output2=$(make -f "$(pwd)/Makefile" teams DRY_RUN=1 2>&1)
+  output2=$(make -f "$(pwd)/src/main/Makefile" teams DRY_RUN=1 2>&1)
 
   # First run should create
   assert_contains "$output1" "Would create team" "First run should create"
@@ -109,11 +109,11 @@ run_test "Template matching by role" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-full.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
 
-  output=$(make -f "$(pwd)/Makefile" readmes DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" readmes DRY_RUN=1 2>&1)
 
   # Check template mapping
   assert_contains "$output" "README-frontend.md.*-frontend" "Frontend repos get frontend template"
@@ -127,7 +127,7 @@ run_test "Workflow completes prerequisites before starting" bash -c '
   # Missing .env
   copy_test_config "config-minimal.json"
 
-  output=$(make -f "$(pwd)/Makefile" all 2>&1 || true)
+  output=$(make -f "$(pwd)/src/main/Makefile" all 2>&1 || true)
 
   # Should fail early in prerequisites, not during execution
   assert_contains "$output" "Checking prerequisites" "Should check prerequisites first"

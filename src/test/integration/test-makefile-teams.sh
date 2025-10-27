@@ -15,12 +15,12 @@ run_test "Create teams on organization account" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-minimal.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
   export MOCK_TEAM_EXISTS="false"
 
-  output=$(make -f "$(pwd)/Makefile" teams 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" teams 2>&1)
   exit_code=$?
 
   assert_exit_code 0 $exit_code "Should succeed"
@@ -33,12 +33,12 @@ run_test "Skip existing teams (idempotent)" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-minimal.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
   export MOCK_TEAM_EXISTS="true"
 
-  output=$(make -f "$(pwd)/Makefile" teams 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" teams 2>&1)
   exit_code=$?
 
   assert_exit_code 0 $exit_code "Should succeed"
@@ -50,12 +50,12 @@ run_test "Multiple teams from full config" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-full.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
   export MOCK_TEAM_EXISTS="false"
 
-  output=$(make -f "$(pwd)/Makefile" teams DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" teams DRY_RUN=1 2>&1)
 
   assert_contains "$output" "frontend-team" "Should process frontend-team"
   assert_contains "$output" "backend-team" "Should process backend-team"

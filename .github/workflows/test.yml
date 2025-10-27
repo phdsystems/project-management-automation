@@ -31,16 +31,16 @@ jobs:
       - name: Setup test environment
         run: |
           # Make test scripts executable
-          chmod +x tests/run-tests.sh
-          chmod +x tests/test-helpers.sh
-          chmod +x tests/mocks/*
-          chmod +x tests/unit/*.sh
-          chmod +x tests/integration/*.sh
-          chmod +x tests/e2e/*.sh
+          chmod +x src/test/run-tests.sh
+          chmod +x src/test/test-helpers.sh
+          chmod +x src/test/mocks/*
+          chmod +x src/test/unit/*.sh
+          chmod +x src/test/integration/*.sh
+          chmod +x src/test/e2e/*.sh
 
       - name: Run ${{ matrix.test-type }} tests
         run: |
-          ./tests/run-tests.sh ${{ matrix.test-type }}
+          ./src/test/run-tests.sh ${{ matrix.test-type }}
         env:
           TEST_ACCOUNT_TYPE: Organization
           VERBOSE: 1
@@ -67,16 +67,16 @@ jobs:
 
       - name: Setup test environment
         run: |
-          chmod +x tests/run-tests.sh
-          chmod +x tests/test-helpers.sh
-          chmod +x tests/mocks/*
-          chmod +x tests/unit/*.sh
-          chmod +x tests/integration/*.sh
-          chmod +x tests/e2e/*.sh
+          chmod +x src/test/run-tests.sh
+          chmod +x src/test/test-helpers.sh
+          chmod +x src/test/mocks/*
+          chmod +x src/test/unit/*.sh
+          chmod +x src/test/integration/*.sh
+          chmod +x src/test/e2e/*.sh
 
       - name: Run all tests
         run: |
-          ./tests/run-tests.sh all
+          ./src/test/run-tests.sh all
         env:
           TEST_ACCOUNT_TYPE: Organization
           VERBOSE: 1
@@ -104,15 +104,15 @@ jobs:
       - name: Lint shell scripts
         run: |
           # Lint test scripts
-          find tests -name "*.sh" -type f -exec shellcheck -x {} +
+          find src/test -name "*.sh" -type f -exec shellcheck -x {} +
 
           # Lint mock scripts
-          find tests/mocks -type f -exec shellcheck {} +
+          find src/test/mocks -type f -exec shellcheck {} +
 
       - name: Validate JSON fixtures
         run: |
           # Validate all JSON files
-          for file in tests/fixtures/*.json; do
+          for file in src/test/fixtures/*.json; do
             echo "Validating $file"
             jq empty "$file" || exit 1
           done
@@ -127,13 +127,13 @@ jobs:
       - name: Run security checks
         run: |
           # Check for hardcoded secrets
-          ! grep -r "ghp_[a-zA-Z0-9]\{36\}" tests/ || {
+          ! grep -r "ghp_[a-zA-Z0-9]\{36\}" src/test/ || {
             echo "ERROR: Found hardcoded GitHub token"
             exit 1
           }
 
           # Check for AWS credentials
-          ! grep -r "AKIA[A-Z0-9]\{16\}" tests/ || {
+          ! grep -r "AKIA[A-Z0-9]\{16\}" src/test/ || {
             echo "ERROR: Found hardcoded AWS credentials"
             exit 1
           }
@@ -141,7 +141,7 @@ jobs:
       - name: Check file permissions
         run: |
           # Ensure no overly permissive files
-          find tests -type f -perm /111 | while read file; do
+          find src/test -type f -perm /111 | while read file; do
             if [[ "$file" != *.sh ]] && [[ ! -x "$file" ]]; then
               echo "WARNING: Unexpected executable: $file"
             fi

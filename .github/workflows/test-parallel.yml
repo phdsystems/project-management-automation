@@ -28,13 +28,13 @@ jobs:
 
       - name: Setup test environment
         run: |
-          chmod +x tests/test-helpers.sh
-          chmod +x tests/mocks/*
-          chmod +x tests/unit/*.sh
+          chmod +x src/test/test-helpers.sh
+          chmod +x src/test/mocks/*
+          chmod +x src/test/unit/*.sh
 
       - name: Run ${{ matrix.test-file }}
         run: |
-          ./tests/unit/${{ matrix.test-file }}.sh
+          ./src/test/unit/${{ matrix.test-file }}.sh
         env:
           TEST_ACCOUNT_TYPE: Organization
           VERBOSE: 1
@@ -65,13 +65,13 @@ jobs:
 
       - name: Setup test environment
         run: |
-          chmod +x tests/test-helpers.sh
-          chmod +x tests/mocks/*
-          chmod +x tests/integration/*.sh
+          chmod +x src/test/test-helpers.sh
+          chmod +x src/test/mocks/*
+          chmod +x src/test/integration/*.sh
 
       - name: Run ${{ matrix.test-file }}
         run: |
-          ./tests/integration/${{ matrix.test-file }}.sh
+          ./src/test/integration/${{ matrix.test-file }}.sh
         env:
           TEST_ACCOUNT_TYPE: Organization
           VERBOSE: 1
@@ -100,13 +100,13 @@ jobs:
 
       - name: Setup test environment
         run: |
-          chmod +x tests/test-helpers.sh
-          chmod +x tests/mocks/*
-          chmod +x tests/e2e/*.sh
+          chmod +x src/test/test-helpers.sh
+          chmod +x src/test/mocks/*
+          chmod +x src/test/e2e/*.sh
 
       - name: Run ${{ matrix.test-file }}
         run: |
-          ./tests/e2e/${{ matrix.test-file }}.sh
+          ./src/test/e2e/${{ matrix.test-file }}.sh
         env:
           TEST_ACCOUNT_TYPE: Organization
           VERBOSE: 1
@@ -154,12 +154,12 @@ jobs:
 
       - name: Lint shell scripts
         run: |
-          find tests -name "*.sh" -type f -exec shellcheck -x {} +
-          find tests/mocks -type f -exec shellcheck {} +
+          find src/test -name "*.sh" -type f -exec shellcheck -x {} +
+          find src/test/mocks -type f -exec shellcheck {} +
 
       - name: Validate JSON fixtures
         run: |
-          for file in tests/fixtures/*.json; do
+          for file in src/test/fixtures/*.json; do
             echo "Validating $file"
             jq empty "$file" || exit 1
           done

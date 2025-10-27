@@ -23,10 +23,13 @@
 #   - Template files in templates/ directory
 # ============================================================================
 
-# Load environment variables from .env file
+# Determine project root directory (two levels up from Makefile location)
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))/../..
+
+# Load environment variables from .env file in project root
 # -include: don't error if .env doesn't exist (checked in prerequisites)
 # export: make all variables available to shell commands
--include .env
+-include $(ROOT_DIR)/.env
 export
 
 # ============================================================================
@@ -39,14 +42,14 @@ SHELL := /bin/bash
 # Use .ONESHELL to execute all recipe lines in a single shell invocation
 .ONESHELL:
 
-# Path to JSON configuration file containing teams and projects
-CONFIG := project-config.json
+# Path to JSON configuration file containing teams and projects (in project root)
+CONFIG := $(ROOT_DIR)/project-config.json
 
 # Default git branch (not currently used, reserved for future features)
 DEFAULT_BRANCH := main
 
-# Temporary directory for cloning repositories
-TMP_DIR := .tmp-repos
+# Temporary directory for cloning repositories (in project root)
+TMP_DIR := $(ROOT_DIR)/.tmp-repos
 
 # Dry-run mode: Set to 1 to preview actions without executing
 # Override with: make all DRY_RUN=1
@@ -98,7 +101,7 @@ check-prereqs:
 	@echo "$(BLUE)🔍 Checking prerequisites...$(NC)"
 
 	# Check .env file exists
-	@test -f .env || { echo "$(RED)❌ .env file not found. Copy .env.example to .env and configure it.$(NC)"; exit 1; }
+	@test -f $(ROOT_DIR)/.env || { echo "$(RED)❌ .env file not found. Copy .env.example to .env and configure it.$(NC)"; exit 1; }
 
 	# Check ORG variable is set (loaded from .env)
 	@test -n "$(ORG)" || { echo "$(RED)❌ ORG variable not set in .env file$(NC)"; exit 1; }

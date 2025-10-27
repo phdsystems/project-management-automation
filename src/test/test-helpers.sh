@@ -1,6 +1,6 @@
 #!/bin/bash
 # Test Helper Functions
-# Source this file in test scripts: source tests/test-helpers.sh
+# Source this file in test scripts: source src/test/test-helpers.sh
 
 # Color codes for output
 RED='\033[0;31m'
@@ -16,7 +16,7 @@ TESTS_FAILED=0
 
 # Setup test environment
 setup_test_env() {
-  export TEST_DIR="$(pwd)/tests"
+  export TEST_DIR="$(pwd)/src/test"
   export FIXTURES_DIR="$TEST_DIR/fixtures"
   export MOCKS_DIR="$TEST_DIR/mocks"
   export TMP_TEST_DIR="/tmp/gh-automation-tests-$$"

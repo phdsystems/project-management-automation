@@ -264,11 +264,11 @@ run_test "Test Makefile target" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-minimal.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
 
-  output=$(make -f "$(pwd)/Makefile" target_name 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" target_name 2>&1)
   assert_exit_code 0 $? "Should succeed"
   assert_contains "$output" "expected" "Should show expected output"
 '
@@ -293,11 +293,11 @@ run_test "Complete workflow" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-full.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
 
-  output=$(make -f "$(pwd)/Makefile" all DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" all DRY_RUN=1 2>&1)
   assert_exit_code 0 $? "Should complete successfully"
 
   # Verify all stages

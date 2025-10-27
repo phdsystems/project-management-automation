@@ -17,10 +17,10 @@ run_test "Prerequisites pass with all requirements" bash -c '
   copy_test_config "config-minimal.json"
 
   # Copy templates
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   # Run check-prereqs
-  output=$(make -f "$(pwd)/Makefile" check-prereqs 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" check-prereqs 2>&1)
   exit_code=$?
 
   assert_exit_code 0 $exit_code "Should pass all checks"
@@ -32,7 +32,7 @@ run_test "Prerequisites fail without .env" bash -c '
   cd "$TMP_TEST_DIR"
   copy_test_config "config-minimal.json"
 
-  output=$(make -f "$(pwd)/Makefile" check-prereqs 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" check-prereqs 2>&1)
   exit_code=$?
 
   assert_exit_code 1 $exit_code "Should fail without .env"
@@ -44,7 +44,7 @@ run_test "Prerequisites fail without config" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
 
-  output=$(make -f "$(pwd)/Makefile" check-prereqs 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" check-prereqs 2>&1)
   exit_code=$?
 
   assert_exit_code 1 $exit_code "Should fail without config"
@@ -57,7 +57,7 @@ run_test "Prerequisites fail without templates" bash -c '
   create_test_env_file "test-org"
   copy_test_config "config-minimal.json"
 
-  output=$(make -f "$(pwd)/Makefile" check-prereqs 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" check-prereqs 2>&1)
   exit_code=$?
 
   assert_exit_code 1 $exit_code "Should fail without templates"

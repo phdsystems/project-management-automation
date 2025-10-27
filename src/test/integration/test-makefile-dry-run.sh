@@ -15,7 +15,7 @@ run_test "Dry-run mode doesn't create resources" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-minimal.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
 
@@ -23,7 +23,7 @@ run_test "Dry-run mode doesn't create resources" bash -c '
   > "$MOCK_LOG"
 
   # Run in dry-run mode
-  output=$(make -f "$(pwd)/Makefile" teams DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" teams DRY_RUN=1 2>&1)
   exit_code=$?
 
   assert_exit_code 0 $exit_code "Should succeed"
@@ -42,11 +42,11 @@ run_test "Dry-run shows all planned actions" bash -c '
   cd "$TMP_TEST_DIR"
   create_test_env_file "test-org"
   copy_test_config "config-full.json"
-  cp -r "$(pwd)/templates" "$TMP_TEST_DIR/"
+  cp -r "$(pwd)/src/main/templates" "$TMP_TEST_DIR/"
 
   export TEST_ACCOUNT_TYPE="Organization"
 
-  output=$(make -f "$(pwd)/Makefile" all DRY_RUN=1 2>&1)
+  output=$(make -f "$(pwd)/src/main/Makefile" all DRY_RUN=1 2>&1)
 
   assert_contains "$output" "Would create team: frontend-team" "Should show team creation"
   assert_contains "$output" "Would create team: backend-team" "Should show team creation"
