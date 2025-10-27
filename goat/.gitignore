@@ -1,0 +1,25 @@
+# Build output
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build cache
+**/.gocache/
+
+# Test binaries and coverage
+*.test
+*.out
+coverage/
+
+# Dependency and workspace artifacts
+vendor/
+go.work.sum
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
