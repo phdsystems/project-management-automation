@@ -1,0 +1,22 @@
+{
+  "teams": [
+    "test-team"
+  ],
+  "projects": [
+    {
+      "name": "test",
+      "repos": [
+        {
+          "name": "frontend",
+          "team": "test-team",
+          "permission": "push"
+        },
+        {
+          "name": "backend",
+          "team": "test-team",
+          "permission": "push"
+        }
+      ]
+    }
+  ]
+}
