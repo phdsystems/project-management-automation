@@ -99,6 +99,7 @@ project-management/
 | **[User Guide](doc/user-guide.md)** | Complete setup, usage, architecture diagrams, troubleshooting |
 | **[CLI Guide](doc/cli-guide.md)** | CLI tool documentation with diagrams |
 | **[Gitea Guide](doc/gitea-guide.md)** | Using with self-hosted Gitea |
+| **[GitHub vs Gitea](doc/github-vs-gitea-comparison.md)** | Complete feature comparison and decision guide |
 | **[Quick Reference](doc/quick-reference.md)** | Command cheat sheet for power users |
 | **[CLI README](src/main/cli/README.md)** | Technical CLI reference |
 | **[Test Report](doc/TEST-REPORT.md)** | Test results and findings |
