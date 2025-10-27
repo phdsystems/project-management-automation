@@ -88,8 +88,55 @@ validation::check_prerequisites() {
     ((errors++))
   fi
 
-  # Check required commands
-  for cmd in gh jq git; do
+  # Detect backend from .env (if available)
+  local backend="github"
+  if [[ -f "${root_dir}/.env" ]]; then
+    # shellcheck source=/dev/null
+    source "${root_dir}/.env"
+    backend="${BACKEND:-github}"
+  fi
+
+  output::debug "Detected backend: $backend"
+
+  # Check backend-specific CLI tool
+  if [[ "$backend" == "gitea" ]]; then
+    # Check for tea CLI
+    if ! validation::check_command "tea"; then
+      output::info "Install tea CLI: https://gitea.com/gitea/tea"
+      ((errors++))
+    fi
+
+    # Check Gitea authentication
+    if command -v tea >/dev/null 2>&1; then
+      if ! tea login list >/dev/null 2>&1 || ! tea login list 2>/dev/null | grep -q '^\*'; then
+        output::error "Not authenticated with Gitea"
+        output::info "Run: tea login add"
+        ((errors++))
+      else
+        output::debug "Gitea authentication: OK"
+      fi
+    fi
+  else
+    # Check for gh CLI (GitHub)
+    if ! validation::check_command "gh"; then
+      output::info "Install gh CLI: https://cli.github.com"
+      ((errors++))
+    fi
+
+    # Check GitHub authentication
+    if command -v gh >/dev/null 2>&1; then
+      if ! gh auth status >/dev/null 2>&1; then
+        output::error "Not authenticated with GitHub"
+        output::info "Run: gh auth login"
+        ((errors++))
+      else
+        output::debug "GitHub authentication: OK"
+      fi
+    fi
+  fi
+
+  # Check common required commands
+  for cmd in jq git; do
     if ! validation::check_command "$cmd"; then
       ((errors++))
     fi
@@ -103,15 +150,6 @@ validation::check_prerequisites() {
     if ! validation::validate_json "${root_dir}/project-config.json"; then
       ((errors++))
     fi
-  fi
-
-  # Check GitHub authentication
-  if ! gh auth status >/dev/null 2>&1; then
-    output::error "Not authenticated with GitHub"
-    output::info "Run: gh auth login"
-    ((errors++))
-  else
-    output::debug "GitHub authentication: OK"
   fi
 
   # Check templates directory

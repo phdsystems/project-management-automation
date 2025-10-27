@@ -12,6 +12,7 @@ declare -g CONFIG_ORG
 declare -g CONFIG_FILE
 declare -g CONFIG_DRY_RUN
 declare -g CONFIG_VERBOSE
+declare -g CONFIG_BACKEND  # "github" or "gitea"
 
 # Load environment configuration
 config::load_env() {
@@ -30,10 +31,11 @@ config::load_env() {
   CONFIG_FILE="${root_dir}/project-config.json"
   CONFIG_DRY_RUN="${DRY_RUN:-0}"
   CONFIG_VERBOSE="${VERBOSE:-0}"
+  CONFIG_BACKEND="${BACKEND:-github}"  # Default to github for backwards compatibility
 
   export VERBOSE="${CONFIG_VERBOSE}"
 
-  output::debug "Loaded config: ORG=$CONFIG_ORG"
+  output::debug "Loaded config: ORG=$CONFIG_ORG, BACKEND=$CONFIG_BACKEND"
   return 0
 }
 
@@ -99,4 +101,19 @@ config::is_dry_run() {
 # Check if verbose mode is enabled
 config::is_verbose() {
   [[ "${CONFIG_VERBOSE}" == "1" ]]
+}
+
+# Get backend type (github or gitea)
+config::get_backend() {
+  echo "${CONFIG_BACKEND:-github}"
+}
+
+# Check if using GitHub backend
+config::is_github() {
+  [[ "${CONFIG_BACKEND:-github}" == "github" ]]
+}
+
+# Check if using Gitea backend
+config::is_gitea() {
+  [[ "${CONFIG_BACKEND:-github}" == "gitea" ]]
 }

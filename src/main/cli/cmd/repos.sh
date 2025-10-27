@@ -9,13 +9,13 @@ source "${SCRIPT_DIR}/../internal/output.sh"
 # shellcheck source=pkg/config.sh
 source "${SCRIPT_DIR}/../pkg/config.sh"
 # shellcheck source=pkg/github.sh
-source "${SCRIPT_DIR}/../pkg/github.sh"
+source "${SCRIPT_DIR}/../pkg/backend.sh"
 
 cmd::repos::create() {
   local root_dir="$1"
   local dry_run="${2:-0}"
 
-  output::header "Creating GitHub repositories"
+  output::header "Creating repositories"
 
   # Load configuration
   config::load_env "$root_dir" || return 1
@@ -49,13 +49,13 @@ cmd::repos::create() {
       output::info "Processing: $repo_name"
 
       # Create repository
-      if ! github::create_repo "$org" "$repo_name" "$dry_run"; then
+      if ! backend::create_repo "$org" "$repo_name" "$dry_run"; then
         ((errors++))
         continue
       fi
 
       # Assign team to repository
-      if ! github::assign_team "$org" "$repo_name" "$team" "$permission" "$dry_run"; then
+      if ! backend::assign_team "$org" "$repo_name" "$team" "$permission" "$dry_run"; then
         ((errors++))
       fi
     fi

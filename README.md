@@ -1,17 +1,22 @@
-# GitHub Organization Project Management Automation
+# Git Platform Organization Automation (GitHub/Gitea)
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Last Updated:** 2025-10-27
 
 ## Overview
 
-Automates GitHub organization setup: creates teams, repositories, and standard files (README, workflows, CODEOWNERS) from a single JSON configuration.
+Automates Git platform organization setup: creates teams, repositories, and standard files (README, workflows, CODEOWNERS) from a single JSON configuration.
+
+**Supports:**
+- ✅ **GitHub** - GitHub.com or GitHub Enterprise
+- ✅ **Gitea** - Self-hosted Gitea instances
 
 **Key features:**
 - ✅ Idempotent operations (safe to run multiple times)
 - ✅ Dry-run mode for testing
 - ✅ JSON-based configuration
 - ✅ Automatic template application by role
+- ✅ Backend-agnostic (same config works for both)
 
 ## Quick Start
 
@@ -51,10 +56,17 @@ make -C src/main all
 
 ## Prerequisites
 
-- `gh` CLI (GitHub CLI) - https://cli.github.com
+**For GitHub:**
+- `gh` CLI - https://cli.github.com
+- GitHub authentication: `gh auth login`
+
+**For Gitea:**
+- `tea` CLI - https://gitea.com/gitea/tea
+- Gitea authentication: `tea login add`
+
+**Common:**
 - `jq` (JSON processor)
 - `git`
-- GitHub authentication: `gh auth login`
 
 ## Project Structure
 
@@ -85,8 +97,10 @@ project-management/
 | Document | Purpose |
 |----------|---------|
 | **[User Guide](doc/user-guide.md)** | Complete setup, usage, architecture diagrams, troubleshooting |
+| **[CLI Guide](doc/cli-guide.md)** | CLI tool documentation with diagrams |
+| **[Gitea Guide](doc/gitea-guide.md)** | Using with self-hosted Gitea |
 | **[Quick Reference](doc/quick-reference.md)** | Command cheat sheet for power users |
-| **[CLI Documentation](src/main/cli/README.md)** | CLI tool documentation and usage |
+| **[CLI README](src/main/cli/README.md)** | Technical CLI reference |
 | **[Test Report](doc/TEST-REPORT.md)** | Test results and findings |
 | **[Test Suite](src/test/README.md)** | Testing documentation for contributors |
 | **[CI Parallelization](doc/ci-parallelization-strategies.md)** | GitHub Actions optimization strategies |
@@ -139,7 +153,13 @@ make -C src/main clean
 
 **`.env` file:**
 ```bash
-ORG=your-github-org-name
+# For GitHub (default)
+ORG=your-github-org
+BACKEND=github  # or omit (default)
+
+# For Gitea
+ORG=your-gitea-org
+BACKEND=gitea
 ```
 
 **`project-config.json`:**
@@ -158,6 +178,8 @@ ORG=your-github-org-name
 ```
 
 Creates: `project-alpha-frontend` assigned to `frontend-team` with push access.
+
+**Note:** Same configuration works for both GitHub and Gitea. Only the BACKEND variable changes.
 
 ## Getting Help
 

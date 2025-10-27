@@ -1,5 +1,5 @@
 #!/bin/bash
-# Teams command - Manage GitHub teams
+# Teams command - Manage teams (GitHub/Gitea)
 # Usage: gh-org teams create
 
 # Source dependencies
@@ -8,17 +8,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../internal/output.sh"
 # shellcheck source=pkg/config.sh
 source "${SCRIPT_DIR}/../pkg/config.sh"
-# shellcheck source=pkg/github.sh
-source "${SCRIPT_DIR}/../pkg/github.sh"
+# shellcheck source=pkg/backend.sh
+source "${SCRIPT_DIR}/../pkg/backend.sh"
 
 cmd::teams::create() {
   local root_dir="$1"
   local dry_run="${2:-0}"
 
-  output::header "Creating GitHub teams"
-
   # Load configuration
   config::load_env "$root_dir" || return 1
+
+  local backend_name
+  backend_name=$(backend::get_name)
+
+  output::header "Creating $backend_name teams"
 
   local org
   org=$(config::get_org)
@@ -33,7 +36,7 @@ cmd::teams::create() {
   # Create each team
   while IFS= read -r team; do
     if [[ -n "$team" ]]; then
-      if ! github::create_team "$org" "$team" "$dry_run"; then
+      if ! backend::create_team "$org" "$team" "$dry_run"; then
         ((errors++))
       fi
     fi
@@ -70,7 +73,7 @@ cmd::teams::run() {
 
 cmd::teams::help() {
   cat <<EOF
-Manage GitHub teams.
+Manage teams (GitHub/Gitea).
 
 Usage:
   gh-org teams create [--dry-run]
@@ -79,9 +82,10 @@ Subcommands:
   create    Create teams from configuration
 
 Description:
-  Creates GitHub teams as defined in project-config.json. Teams are created
-  with 'closed' privacy setting (visible only to organization members).
+  Creates teams as defined in project-config.json. Backend (GitHub/Gitea)
+  is determined by BACKEND variable in .env file (default: github).
 
+  Teams are created with appropriate privacy settings for the platform.
   The command is idempotent - it will skip teams that already exist.
 
 Examples:
@@ -100,5 +104,9 @@ Configuration:
   {
     "teams": ["frontend-team", "backend-team", "infra-team"]
   }
+
+  Backend selection (.env):
+  BACKEND=github   # Use GitHub (default)
+  BACKEND=gitea    # Use Gitea
 EOF
 }

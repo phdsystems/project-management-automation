@@ -9,7 +9,7 @@ source "${SCRIPT_DIR}/../internal/output.sh"
 # shellcheck source=pkg/config.sh
 source "${SCRIPT_DIR}/../pkg/config.sh"
 # shellcheck source=pkg/github.sh
-source "${SCRIPT_DIR}/../pkg/github.sh"
+source "${SCRIPT_DIR}/../pkg/backend.sh"
 # shellcheck source=pkg/templates.sh
 source "${SCRIPT_DIR}/../pkg/templates.sh"
 
@@ -65,7 +65,7 @@ cmd::files::readme() {
       local repo_dir="${tmp_dir}/${repo_name}"
       rm -rf "$repo_dir"
 
-      if ! github::clone_repo "$org" "$repo_name" "$repo_dir"; then
+      if ! backend::clone_repo "$org" "$repo_name" "$repo_dir"; then
         ((errors++))
         continue
       fi
@@ -78,7 +78,7 @@ cmd::files::readme() {
       fi
 
       # Commit and push
-      if ! github::commit_and_push "$repo_dir" "docs: add README template for $role" "0"; then
+      if ! backend::commit_and_push "$repo_dir" "docs: add README template for $role" "0"; then
         ((errors++))
       fi
 
@@ -148,7 +148,7 @@ cmd::files::workflow() {
       local repo_dir="${tmp_dir}/${repo_name}"
       rm -rf "$repo_dir"
 
-      if ! github::clone_repo "$org" "$repo_name" "$repo_dir"; then
+      if ! backend::clone_repo "$org" "$repo_name" "$repo_dir"; then
         ((errors++))
         continue
       fi
@@ -161,7 +161,7 @@ cmd::files::workflow() {
       fi
 
       # Commit and push
-      if ! github::commit_and_push "$repo_dir" "ci: add GitHub Actions workflow for $role" "0"; then
+      if ! backend::commit_and_push "$repo_dir" "ci: add GitHub Actions workflow for $role" "0"; then
         ((errors++))
       fi
 
@@ -227,7 +227,7 @@ cmd::files::codeowners() {
       local repo_dir="${tmp_dir}/${repo_name}"
       rm -rf "$repo_dir"
 
-      if ! github::clone_repo "$org" "$repo_name" "$repo_dir"; then
+      if ! backend::clone_repo "$org" "$repo_name" "$repo_dir"; then
         ((errors++))
         continue
       fi
@@ -240,7 +240,7 @@ cmd::files::codeowners() {
       fi
 
       # Commit and push
-      if ! github::commit_and_push "$repo_dir" "chore: add CODEOWNERS file" "0"; then
+      if ! backend::commit_and_push "$repo_dir" "chore: add CODEOWNERS file" "0"; then
         ((errors++))
       fi
 
