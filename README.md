@@ -15,6 +15,8 @@ Automates GitHub organization setup: creates teams, repositories, and standard f
 
 ## Quick Start
 
+### Option 1: CLI (Recommended)
+
 ```bash
 # 1. Configure environment
 cp .env.example .env
@@ -24,10 +26,27 @@ nano .env  # Set your ORG name
 nano project-config.json
 
 # 3. Run (preview first)
-make all DRY_RUN=1
+./src/main/cli/gh-org setup --dry-run
 
 # 4. Execute
-make all
+./src/main/cli/gh-org setup
+```
+
+### Option 2: Makefile
+
+```bash
+# 1. Configure environment
+cp .env.example .env
+nano .env  # Set your ORG name
+
+# 2. Configure projects
+nano project-config.json
+
+# 3. Run (preview first)
+make -C src/main all DRY_RUN=1
+
+# 4. Execute
+make -C src/main all
 ```
 
 ## Prerequisites
@@ -43,17 +62,22 @@ make all
 project-management/
 ├── src/
 │   ├── main/
-│   │   ├── Makefile              # Main automation script
-│   │   └── templates/            # README/workflow/CODEOWNERS templates
-│   └── test/                     # Test suite
-├── doc/                          # Detailed documentation
-│   ├── user-guide.md             # Complete setup and usage guide
-│   ├── quick-reference.md        # Command cheat sheet
-│   ├── TEST-REPORT.md            # Test results
+│   │   ├── cli/                  # CLI tool (gh-org)
+│   │   │   ├── gh-org           # Main CLI entry point
+│   │   │   ├── cmd/             # Command handlers
+│   │   │   ├── pkg/             # Core logic modules
+│   │   │   └── internal/        # Internal utilities
+│   │   ├── Makefile             # Automation Makefile
+│   │   └── templates/           # README/workflow/CODEOWNERS templates
+│   └── test/                    # Test suite
+├── doc/                         # Detailed documentation
+│   ├── user-guide.md            # Complete setup and usage guide
+│   ├── quick-reference.md       # Command cheat sheet
+│   ├── TEST-REPORT.md           # Test results
 │   └── ci-parallelization-strategies.md
-├── .env                          # Your configuration (gitignored)
-├── .env.example                  # Configuration template
-└── project-config.json           # Projects/teams/repos definition
+├── .env                         # Your configuration (gitignored)
+├── .env.example                 # Configuration template
+└── project-config.json          # Projects/teams/repos definition
 ```
 
 ## Documentation
@@ -62,11 +86,38 @@ project-management/
 |----------|---------|
 | **[User Guide](doc/user-guide.md)** | Complete setup, usage, architecture diagrams, troubleshooting |
 | **[Quick Reference](doc/quick-reference.md)** | Command cheat sheet for power users |
+| **[CLI Documentation](src/main/cli/README.md)** | CLI tool documentation and usage |
 | **[Test Report](doc/TEST-REPORT.md)** | Test results and findings |
 | **[Test Suite](src/test/README.md)** | Testing documentation for contributors |
 | **[CI Parallelization](doc/ci-parallelization-strategies.md)** | GitHub Actions optimization strategies |
 
 ## Common Commands
+
+### Using CLI (gh-org)
+
+```bash
+# Check prerequisites
+./src/main/cli/gh-org check
+
+# Run complete setup
+./src/main/cli/gh-org setup
+
+# Individual operations
+./src/main/cli/gh-org teams create
+./src/main/cli/gh-org repos create
+./src/main/cli/gh-org files readme
+./src/main/cli/gh-org files workflow
+./src/main/cli/gh-org files codeowners
+
+# Dry-run mode (preview changes)
+./src/main/cli/gh-org setup --dry-run
+
+# Get help
+./src/main/cli/gh-org --help
+./src/main/cli/gh-org teams --help
+```
+
+### Using Makefile
 
 ```bash
 # Run everything

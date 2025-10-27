@@ -1,0 +1,186 @@
+#!/bin/bash
+# gh-org: GitHub Organization Management CLI
+# A tool for automating GitHub organization setup and management
+
+set -e
+set -o pipefail
+
+# Determine CLI directory
+CLI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "${CLI_DIR}/../../.." && pwd)"
+
+# Source command handlers
+# shellcheck source=cmd/check.sh
+source "${CLI_DIR}/cmd/check.sh"
+# shellcheck source=cmd/teams.sh
+source "${CLI_DIR}/cmd/teams.sh"
+# shellcheck source=cmd/repos.sh
+source "${CLI_DIR}/cmd/repos.sh"
+# shellcheck source=cmd/files.sh
+source "${CLI_DIR}/cmd/files.sh"
+# shellcheck source=cmd/setup.sh
+source "${CLI_DIR}/cmd/setup.sh"
+# shellcheck source=internal/output.sh
+source "${CLI_DIR}/internal/output.sh"
+
+# CLI version
+VERSION="1.0.0"
+
+# Show main help
+show_help() {
+  cat <<EOF
+gh-org: GitHub Organization Management CLI v${VERSION}
+
+A command-line tool for automating GitHub organization setup and management.
+
+Usage:
+  gh-org <command> [subcommand] [options]
+
+Commands:
+  check          Check prerequisites
+  teams          Manage GitHub teams
+  repos          Manage GitHub repositories
+  files          Manage template files in repositories
+  setup          Run complete organization setup
+  version        Show version information
+  help           Show this help message
+
+Examples:
+  # Check prerequisites
+  gh-org check
+
+  # Create teams
+  gh-org teams create
+
+  # Create repositories
+  gh-org repos create
+
+  # Add README files
+  gh-org files readme
+
+  # Run complete setup
+  gh-org setup
+
+  # Preview changes (dry-run)
+  gh-org setup --dry-run
+
+Global Options:
+  --dry-run      Preview changes without executing
+  --verbose      Enable verbose output
+  -h, --help     Show help for command
+
+Get help for specific commands:
+  gh-org teams --help
+  gh-org repos --help
+  gh-org files --help
+  gh-org setup --help
+
+Configuration:
+  .env                  Environment configuration (ORG name)
+  project-config.json   Teams, projects, and repositories
+  src/main/templates/   Template files for repos
+
+Documentation:
+  See doc/user-guide.md for complete documentation
+
+Repository:
+  https://github.com/phdsystems/project-management-automation
+EOF
+}
+
+# Show version
+show_version() {
+  echo "gh-org version ${VERSION}"
+}
+
+# Parse global options
+parse_global_options() {
+  DRY_RUN=0
+  VERBOSE=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --dry-run)
+        DRY_RUN=1
+        export CONFIG_DRY_RUN=1
+        shift
+        ;;
+      --verbose)
+        VERBOSE=1
+        export CONFIG_VERBOSE=1
+        shift
+        ;;
+      *)
+        # Not a global option, return remaining args
+        echo "$@"
+        return
+        ;;
+    esac
+  done
+}
+
+# Main CLI entry point
+main() {
+  # Handle no arguments
+  if [[ $# -eq 0 ]]; then
+    show_help
+    exit 0
+  fi
+
+  # Parse global options first
+  local args
+  args=$(parse_global_options "$@")
+  # shellcheck disable=SC2086
+  set -- $args
+
+  # Get command
+  local command="$1"
+  shift || true
+
+  # Route to command handlers
+  case "$command" in
+    check)
+      cmd::check::run "$ROOT_DIR"
+      ;;
+
+    teams)
+      local subcommand="${1:-create}"
+      shift || true
+      cmd::teams::run "$subcommand" "$ROOT_DIR" "$DRY_RUN"
+      ;;
+
+    repos)
+      local subcommand="${1:-create}"
+      shift || true
+      cmd::repos::run "$subcommand" "$ROOT_DIR" "$DRY_RUN"
+      ;;
+
+    files)
+      local subcommand="${1:-}"
+      shift || true
+      cmd::files::run "$subcommand" "$ROOT_DIR" "$DRY_RUN"
+      ;;
+
+    setup)
+      cmd::setup::run "$ROOT_DIR" "$DRY_RUN"
+      ;;
+
+    version|-v|--version)
+      show_version
+      ;;
+
+    help|-h|--help)
+      show_help
+      ;;
+
+    *)
+      output::error "Unknown command: $command"
+      echo ""
+      show_help
+      exit 1
+      ;;
+  esac
+}
+
+# Run main
+main "$@"

@@ -22,9 +22,15 @@
 
 ## Introduction
 
+> **💡 Note:** This guide covers the **Makefile** approach. If you prefer a modern CLI interface with colored output and rich help text, see the **[CLI Guide](cli-guide.md)** for the `gh-org` command-line tool.
+
 ### What is GitHub Organization Automation?
 
 This tool automates the creation and configuration of GitHub teams, repositories, and standard files across multiple projects in your GitHub Organization.
+
+**Two interfaces available:**
+1. **Makefile** (covered in this guide) - Traditional `make` targets
+2. **CLI Tool** (`gh-org`) - Modern command-line interface ([CLI Guide](cli-guide.md))
 
 **What it does:**
 - Creates teams with proper permissions

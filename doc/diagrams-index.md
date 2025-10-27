@@ -1,12 +1,14 @@
 # Mermaid Diagrams Index
 
-**Location:** `docs/user-guide.md`
-**Total Diagrams:** 11
+**Locations:** `doc/user-guide.md`, `doc/cli-guide.md`
+**Total Diagrams:** 18 (11 in User Guide + 7 in CLI Guide)
 **Last Updated:** 2025-10-27
 
 ## Overview
 
-The User Guide includes 11 mermaid diagrams to visualize workflows, configurations, and decision trees.
+The documentation includes 18 mermaid diagrams across two main guides:
+- **User Guide** (11 diagrams) - Makefile workflows, configurations, and decision trees
+- **CLI Guide** (7 diagrams) - CLI architecture, command flows, and comparisons
 
 ---
 
@@ -211,6 +213,130 @@ Dry-run → Review OK? → [Fix or Execute] → Done
 
 ---
 
+## CLI Guide Diagrams (doc/cli-guide.md)
+
+### 13. CLI High-Level Architecture
+
+**Location:** Architecture section
+**Type:** Graph (4 subgraphs)
+**Purpose:** Shows CLI package structure and dependencies
+
+**Components:**
+- CLI Entry Point (gh-org)
+- Command Layer (cmd/)
+- Business Logic (pkg/)
+- Utilities (internal/)
+- External Dependencies (gh, jq, git)
+
+**Use Case:** Understanding CLI architecture
+
+---
+
+### 14. Command Hierarchy
+
+**Location:** Commands Reference section
+**Type:** Graph (Tree structure)
+**Purpose:** Shows all commands and subcommands
+
+**Structure:**
+```
+gh-org
+├── check
+├── teams → create
+├── repos → create
+├── files → readme/workflow/codeowners
+├── setup
+├── version
+└── help
+```
+
+**Use Case:** Discovering available commands
+
+---
+
+### 15. Complete Setup Workflow (CLI)
+
+**Location:** Workflows section
+**Type:** Flowchart (Complex with error handling)
+**Purpose:** Shows complete setup execution with error paths
+
+**Stages:**
+1. Prerequisites check
+2. Create teams (continue on error)
+3. Create repos (continue on error)
+4. Add READMEs (continue on error)
+5. Add workflows (continue on error)
+6. Add CODEOWNERS (continue on error)
+7. Summary (success or partial failure)
+
+**Use Case:** Understanding CLI execution flow
+
+---
+
+### 16. File Addition Workflow
+
+**Location:** Workflows section
+**Type:** Flowchart (Linear with branch)
+**Purpose:** Shows how template files are applied
+
+**Steps:**
+- Load config → Get role → Select template → Dry-run check
+- If dry-run: Print preview
+- If execute: Clone → Copy → Commit → Push → Cleanup
+
+**Use Case:** Understanding file operations
+
+---
+
+### 17. Data Flow
+
+**Location:** Workflows section
+**Type:** Flowchart (4 subgraphs)
+**Purpose:** Shows data flow through CLI
+
+**Components:**
+- Input (.env, config.json, templates)
+- CLI Processing (parse, load, execute)
+- GitHub API (teams, repos, permissions)
+- Output (created resources, console)
+
+**Use Case:** Understanding data pipeline
+
+---
+
+### 18. Command Execution Sequence
+
+**Location:** Diagrams section
+**Type:** Sequence diagram
+**Purpose:** Shows interaction between components
+
+**Participants:**
+- User
+- CLI (gh-org)
+- Command Handler
+- Business Logic
+- GitHub API
+
+**Flow:** User command → Parse → Route → Load config → API calls → Output
+
+**Use Case:** Understanding component interactions
+
+---
+
+### 19. Dry-Run vs Execute Mode
+
+**Location:** Diagrams section
+**Type:** Flowchart (Branching)
+**Purpose:** Shows difference between modes
+
+**Branches:**
+- Dry-run: Simulate → Print preview → No API calls
+- Execute: Validate → API calls → Commit changes → Output
+
+**Use Case:** Understanding dry-run behavior
+
+---
+
 ## Diagram Characteristics
 
 ### Color Scheme
@@ -232,17 +358,18 @@ Dry-run → Review OK? → [Fix or Execute] → Done
 
 | Type | Count | Purpose |
 |------|-------|---------|
-| Flowchart | 9 | Process flows and decisions |
-| Graph | 3 | Relationships and structures |
-| **Total** | **12** | Comprehensive visualization |
+| Flowchart | 13 | Process flows and decisions |
+| Graph | 5 | Relationships and structures |
+| Sequence | 1 | Component interactions |
+| **Total** | **19** | Comprehensive visualization |
 
 ### Complexity Levels
 
 | Level | Count | Diagrams |
 |-------|-------|----------|
-| Simple | 3 | Quick Start, Naming, Workflow 1 |
-| Medium | 5 | Prerequisites, Config, Template Matching, Workflow 2, Permissions |
-| Complex | 4 | Full Workflow, Decision Tree, Troubleshooting, Best Practices |
+| Simple | 5 | Quick Start, Naming, Workflow 1, Command Hierarchy, Dry-Run |
+| Medium | 8 | Prerequisites, Config, Template Matching, Workflow 2, Permissions, CLI Architecture, File Addition, Data Flow |
+| Complex | 6 | Full Workflow, Decision Tree, Troubleshooting, Best Practices, CLI Setup Workflow, Sequence Diagram |
 
 ---
 
@@ -330,12 +457,14 @@ Paste mermaid code at:
 
 | Metric | Value |
 |--------|-------|
-| Total diagrams | 12 |
-| Total nodes | ~150 |
-| Total edges | ~180 |
-| Lines of mermaid code | ~370 |
-| Sections with diagrams | 11 |
-| Coverage | 92% of major sections |
+| Total diagrams | 19 |
+| User Guide diagrams | 12 |
+| CLI Guide diagrams | 7 |
+| Total nodes | ~280 |
+| Total edges | ~320 |
+| Lines of mermaid code | ~750 |
+| Sections with diagrams | 18 |
+| Coverage | 95% of major sections |
 
 ---
 
@@ -356,6 +485,8 @@ Paste mermaid code at:
 
 **For more diagrams, see:**
 - Main README: `../README.md` (Architecture Overview, Workflow Diagram, etc.)
+- CLI Guide: `cli-guide.md` (7 CLI-specific diagrams)
+- User Guide: `user-guide.md` (12 Makefile workflow diagrams)
 - CI Parallelization: `ci-parallelization-strategies.md` (3 execution models)
 
 *Last Updated: 2025-10-27*
