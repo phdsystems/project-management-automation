@@ -7,6 +7,20 @@
 
 **Automated GitHub organization setup**: This Makefile automates the creation of teams, repositories, and standard files (README, GitHub Actions workflows, CODEOWNERS) across multiple projects. **Key features**: Idempotent operations (safe to run multiple times) → Dry-run mode for testing → Reads configuration from JSON → Clones repos and commits changes. **Quick start**: Copy `.env.example` to `.env`, set your `ORG` name, configure `project-config.json`, run `make all`.
 
+**📚 New to this tool?** See the [User Guide](docs/user-guide.md) for step-by-step instructions.
+
+---
+
+## Documentation
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[User Guide](docs/user-guide.md)** | Complete setup and usage guide | All users |
+| **[Quick Reference](docs/quick-reference.md)** | Command cheat sheet | Power users |
+| **[Test Report](TEST-REPORT.md)** | Test results and findings | Developers |
+| **[Test Suite](tests/README.md)** | Testing documentation | Contributors |
+| **[CI Parallelization](docs/ci-parallelization-strategies.md)** | GitHub Actions optimization | DevOps |
+
 ---
 
 ## Overview
