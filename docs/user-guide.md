@@ -112,6 +112,30 @@ Done! Your organization now has:
 - ✅ Repository: `project-myproject-frontend`
 - ✅ README, CI workflow, and CODEOWNERS files
 
+### Quick Start Visual Flow
+
+```mermaid
+flowchart LR
+    A[1. Clone Repo] --> B[2. Configure .env]
+    B --> C[3. Create config.json]
+    C --> D[4. Authenticate gh]
+    D --> E[5. Dry-run]
+    E --> F{Review OK?}
+    F -->|No| G[Fix Config]
+    G --> E
+    F -->|Yes| H[6. Execute]
+    H --> I[✅ Done!]
+
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style D fill:#f3e5f5
+    style E fill:#fff9c4
+    style F fill:#ffecb3
+    style H fill:#c8e6c9
+    style I fill:#a5d6a7
+```
+
 ---
 
 ## Prerequisites
@@ -223,6 +247,50 @@ gh api /orgs/YOUR_ORG/memberships/YOUR_USERNAME | jq -r '.role'
 
 **Should output:** `admin` or `owner`
 
+### Prerequisites Checklist
+
+```mermaid
+flowchart TD
+    Start([Start Prerequisites Check]) --> A{gh CLI<br/>installed?}
+    A -->|No| A1[Install GitHub CLI]
+    A1 --> A
+    A -->|Yes| B{jq<br/>installed?}
+
+    B -->|No| B1[Install jq]
+    B1 --> B
+    B -->|Yes| C{make<br/>installed?}
+
+    C -->|No| C1[Install make]
+    C1 --> C
+    C -->|Yes| D{git<br/>installed?}
+
+    D -->|No| D1[Install git]
+    D1 --> D
+    D -->|Yes| E{GitHub<br/>authenticated?}
+
+    E -->|No| E1[Run: gh auth login]
+    E1 --> E
+    E -->|Yes| F{Organization<br/>account?}
+
+    F -->|No| F1[Create Organization]
+    F1 --> F
+    F -->|Yes| G{Admin<br/>permissions?}
+
+    G -->|No| G1[Request org access]
+    G1 --> G
+    G -->|Yes| H([✅ Ready to Start])
+
+    style Start fill:#e3f2fd
+    style H fill:#c8e6c9
+    style A1 fill:#ffcdd2
+    style B1 fill:#ffcdd2
+    style C1 fill:#ffcdd2
+    style D1 fill:#ffcdd2
+    style E1 fill:#fff9c4
+    style F1 fill:#fff9c4
+    style G1 fill:#fff9c4
+```
+
 ---
 
 ## Installation
@@ -279,6 +347,41 @@ VERBOSE=0
 ```
 
 **Important:** The `.env` file is gitignored for security.
+
+### Configuration Architecture
+
+```mermaid
+graph LR
+    subgraph Files["Configuration Files"]
+        A[.env<br/>Environment]
+        B[project-config.json<br/>Teams & Projects]
+        C[templates/<br/>Template Files]
+    end
+
+    subgraph Makefile["Makefile Processing"]
+        D[Load Environment]
+        E[Parse JSON]
+        F[Match Templates]
+    end
+
+    subgraph GitHub["GitHub API"]
+        G[Create Teams]
+        H[Create Repos]
+        I[Apply Templates]
+    end
+
+    A --> D
+    B --> E
+    C --> F
+
+    D --> G
+    E --> H
+    F --> I
+
+    style Files fill:#e3f2fd
+    style Makefile fill:#fff3e0
+    style GitHub fill:#c8e6c9
+```
 
 ### Step 2: Project Configuration
 
@@ -350,6 +453,28 @@ Repositories are named: `project-{PROJECT_NAME}-{REPO_NAME}`
 - Project: `alpha`, Repo: `frontend` → `project-alpha-frontend`
 - Project: `beta`, Repo: `backend` → `project-beta-backend`
 
+```mermaid
+flowchart LR
+    A[Project: 'alpha'] --> B[Repo: 'frontend']
+    B --> C["project-alpha-frontend"]
+
+    D[Project: 'beta'] --> E[Repo: 'backend']
+    E --> F["project-beta-backend"]
+
+    G[Project: 'prod'] --> H[Repo: 'infra']
+    H --> I["project-prod-infra"]
+
+    style A fill:#e3f2fd
+    style D fill:#e3f2fd
+    style G fill:#e3f2fd
+    style B fill:#fff3e0
+    style E fill:#fff3e0
+    style H fill:#fff3e0
+    style C fill:#c8e6c9
+    style F fill:#c8e6c9
+    style I fill:#c8e6c9
+```
+
 ### Step 3: Customize Templates (Optional)
 
 Templates are in `templates/` directory:
@@ -370,6 +495,38 @@ Templates are matched by the `name` field in repo configuration:
 - `name: "frontend"` → Uses `README-frontend.md` and `workflow-frontend.yml`
 - `name: "backend"` → Uses `README-backend.md` and `workflow-backend.yml`
 - `name: "infra"` → Uses `README-infra.md` and `workflow-infra.yml`
+
+```mermaid
+flowchart TD
+    A[Repo name: 'frontend'] --> B{Extract Role}
+    B --> C[Role: 'frontend']
+
+    C --> D[templates/README-frontend.md]
+    C --> E[templates/workflow-frontend.yml]
+
+    D --> F[→ README.md]
+    E --> G[→ .github/workflows/ci.yml]
+
+    H[Repo name: 'backend'] --> I{Extract Role}
+    I --> J[Role: 'backend']
+
+    J --> K[templates/README-backend.md]
+    J --> L[templates/workflow-backend.yml]
+
+    K --> M[→ README.md]
+    L --> N[→ .github/workflows/ci.yml]
+
+    style A fill:#e3f2fd
+    style H fill:#e3f2fd
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+    style K fill:#fff3e0
+    style L fill:#fff3e0
+    style F fill:#c8e6c9
+    style G fill:#c8e6c9
+    style M fill:#c8e6c9
+    style N fill:#c8e6c9
+```
 
 **To customize:**
 1. Edit template files directly
@@ -418,6 +575,55 @@ make all
 4. `readmes` - Add README templates
 5. `workflows` - Add GitHub Actions workflows
 6. `codeowners` - Add CODEOWNERS files
+
+```mermaid
+flowchart TD
+    A[make all] --> B[check-prereqs]
+    B --> C{All OK?}
+    C -->|No| D[❌ Error]
+    C -->|Yes| E[teams]
+
+    E --> F{Team exists?}
+    F -->|Yes| G[⏭️ Skip]
+    F -->|No| H[✨ Create Team]
+
+    G --> I[repos]
+    H --> I
+
+    I --> J{Repo exists?}
+    J -->|Yes| K[⏭️ Skip]
+    J -->|No| L[✨ Create Repo]
+
+    K --> M[Assign Teams]
+    L --> M
+
+    M --> N[readmes]
+    N --> O[Clone Repo]
+    O --> P[Copy Template]
+    P --> Q[Commit & Push]
+
+    Q --> R[workflows]
+    R --> S[Clone Repo]
+    S --> T[Copy Template]
+    T --> U[Commit & Push]
+
+    U --> V[codeowners]
+    V --> W[Clone Repo]
+    W --> X[Copy Template]
+    X --> Y[Commit & Push]
+
+    Y --> Z[✅ Complete]
+
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style E fill:#c8e6c9
+    style I fill:#c8e6c9
+    style N fill:#c8e6c9
+    style R fill:#c8e6c9
+    style V fill:#c8e6c9
+    style Z fill:#a5d6a7
+    style D fill:#ffcdd2
+```
 
 **Typical output:**
 ```
@@ -476,6 +682,32 @@ make clean
 
 ## Common Workflows
 
+### Workflow Decision Tree
+
+```mermaid
+flowchart TD
+    Start{What do you<br/>want to do?}
+
+    Start -->|New project| A[Single Project Setup]
+    Start -->|Multiple projects| B[Multiple Projects Setup]
+    Start -->|Microservices| C[Microservices Architecture]
+    Start -->|Add to existing| D[Add New Project]
+    Start -->|Update files| E[Incremental Updates]
+
+    A --> A1[Use Workflow 1]
+    B --> B1[Use Workflow 2]
+    C --> C1[Use Workflow 3]
+    D --> D1[Use Workflow 4]
+    E --> E1[Use Workflow 5]
+
+    style Start fill:#e3f2fd
+    style A1 fill:#c8e6c9
+    style B1 fill:#c8e6c9
+    style C1 fill:#c8e6c9
+    style D1 fill:#c8e6c9
+    style E1 fill:#c8e6c9
+```
+
 ### Workflow 1: Single Project Setup
 
 **Scenario:** Create repositories for one project.
@@ -502,6 +734,40 @@ make all            # Execute
 **Result:**
 - Team: `dev-team`
 - Repositories: `project-myapp-frontend`, `project-myapp-backend`
+
+**Visual:**
+```mermaid
+graph TB
+    subgraph Team["Team Created"]
+        T[dev-team]
+    end
+
+    subgraph Repos["Repositories Created"]
+        R1[project-myapp-frontend]
+        R2[project-myapp-backend]
+    end
+
+    subgraph Files["Files Added"]
+        F1[README.md]
+        F2[.github/workflows/ci.yml]
+        F3[.github/CODEOWNERS]
+    end
+
+    T -->|push permission| R1
+    T -->|push permission| R2
+
+    R1 --> F1
+    R1 --> F2
+    R1 --> F3
+
+    R2 --> F1
+    R2 --> F2
+    R2 --> F3
+
+    style Team fill:#e3f2fd
+    style Repos fill:#fff3e0
+    style Files fill:#c8e6c9
+```
 
 ---
 
@@ -536,6 +802,35 @@ make all            # Execute
 - 4 repositories: `project-alpha-frontend`, `project-alpha-backend`, `project-beta-frontend`, `project-beta-backend`
 - Frontend team has access to both frontend repos
 - Backend team has access to both backend repos
+
+**Visual:**
+```mermaid
+graph TB
+    subgraph Teams["Teams"]
+        T1[frontend-team]
+        T2[backend-team]
+    end
+
+    subgraph Alpha["Project Alpha"]
+        A1[project-alpha-frontend]
+        A2[project-alpha-backend]
+    end
+
+    subgraph Beta["Project Beta"]
+        B1[project-beta-frontend]
+        B2[project-beta-backend]
+    end
+
+    T1 -->|push| A1
+    T1 -->|push| B1
+
+    T2 -->|push| A2
+    T2 -->|push| B2
+
+    style Teams fill:#e3f2fd
+    style Alpha fill:#fff3e0
+    style Beta fill:#fff9c4
+```
 
 ---
 
@@ -673,6 +968,42 @@ VERBOSE=1 make all
 ---
 
 ## Troubleshooting
+
+### Troubleshooting Decision Tree
+
+```mermaid
+flowchart TD
+    Start{What's the<br/>error?}
+
+    Start -->|.env not found| A[Missing Config]
+    Start -->|ORG not set| B[Empty ORG]
+    Start -->|gh not installed| C[Missing Tool]
+    Start -->|Not authenticated| D[Auth Issue]
+    Start -->|Team 404| E[Account Type]
+    Start -->|Repo exists| F[Idempotent]
+    Start -->|Invalid JSON| G[Syntax Error]
+    Start -->|Other| H[See Full Guide]
+
+    A --> A1[cp .env.example .env]
+    B --> B1[Edit .env, set ORG]
+    C --> C1[brew install gh]
+    D --> D1[gh auth login]
+    E --> E1{Account Type?}
+    E1 -->|User| E2[Create Organization]
+    E1 -->|Org| E3[Check permissions]
+    F --> F1[Normal - continue]
+    G --> G1[jq . config.json]
+
+    style Start fill:#e3f2fd
+    style A1 fill:#c8e6c9
+    style B1 fill:#c8e6c9
+    style C1 fill:#c8e6c9
+    style D1 fill:#c8e6c9
+    style E2 fill:#fff9c4
+    style E3 fill:#fff9c4
+    style F1 fill:#a5d6a7
+    style G1 fill:#fff3e0
+```
 
 ### Common Issues
 
@@ -874,6 +1205,28 @@ gh help repo
 ---
 
 ## Best Practices
+
+### Best Practices Workflow
+
+```mermaid
+flowchart LR
+    A[1. Start Small] --> B[2. Dry-Run First]
+    B --> C[3. Review Output]
+    C --> D{Looks Good?}
+    D -->|No| E[Fix Config]
+    E --> B
+    D -->|Yes| F[4. Execute]
+    F --> G[5. Verify Results]
+    G --> H[6. Version Control]
+    H --> I[7. Document Changes]
+    I --> J[8. Scale Up]
+
+    style A fill:#e3f2fd
+    style B fill:#fff9c4
+    style C fill:#fff3e0
+    style F fill:#c8e6c9
+    style J fill:#a5d6a7
+```
 
 ### 1. Always Use Dry-Run First
 
@@ -1120,6 +1473,25 @@ Git will commit new versions.
 ---
 
 ## Reference
+
+### Permission Hierarchy
+
+```mermaid
+graph TD
+    A[pull<br/>Read Only] --> B[push<br/>Read + Write]
+    B --> C[triage<br/>+ Manage Issues]
+    B --> D[maintain<br/>+ Manage Issues/PRs]
+    D --> E[admin<br/>Full Control]
+
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#fff9c4
+    style D fill:#ffe0b2
+    style E fill:#ffcdd2
+
+    A2[Most Restrictive] -.-> A
+    E2[Most Permissive] -.-> E
+```
 
 ### Makefile Targets
 
