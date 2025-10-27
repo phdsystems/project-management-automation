@@ -277,6 +277,109 @@ Example output:
 
 ---
 
+## Template Matching Flow
+
+This diagram shows how repositories are created and templates are automatically applied based on the **role** defined in `project-config.json`.
+
+### Example Configuration
+
+```json
+{
+  "projects": [
+    {
+      "name": "alpha",
+      "repos": [
+        {"name": "frontend", "team": "frontend-team", "permission": "push"},
+        {"name": "backend", "team": "backend-team", "permission": "push"}
+      ]
+    },
+    {
+      "name": "beta",
+      "repos": [
+        {"name": "frontend", "team": "frontend-team", "permission": "push"},
+        {"name": "infra", "team": "infra-team", "permission": "admin"}
+      ]
+    }
+  ]
+}
+```
+
+### Repository Creation and Template Application
+
+```mermaid
+flowchart TB
+    subgraph Config["project-config.json"]
+        A1["Project: alpha<br/>- frontend<br/>- backend"]
+        A2["Project: beta<br/>- frontend<br/>- infra"]
+    end
+
+    subgraph Create["Step 1: Create Repositories"]
+        B1["project-alpha-frontend"]
+        B2["project-alpha-backend"]
+        B3["project-beta-frontend"]
+        B4["project-beta-infra"]
+    end
+
+    subgraph Templates["Available Templates"]
+        T1["📄 README-frontend.md<br/>⚙️ workflow-frontend.yml"]
+        T2["📄 README-backend.md<br/>⚙️ workflow-backend.yml"]
+        T3["📄 README-infra.md<br/>⚙️ workflow-infra.yml"]
+        T4["👥 CODEOWNERS<br/>(applied to all)"]
+    end
+
+    subgraph Apply["Step 2: Apply Templates Based on Role"]
+        C1["project-alpha-frontend<br/>✅ README-frontend.md → README.md<br/>✅ workflow-frontend.yml → .github/workflows/ci.yml<br/>✅ CODEOWNERS → .github/CODEOWNERS"]
+
+        C2["project-alpha-backend<br/>✅ README-backend.md → README.md<br/>✅ workflow-backend.yml → .github/workflows/ci.yml<br/>✅ CODEOWNERS → .github/CODEOWNERS"]
+
+        C3["project-beta-frontend<br/>✅ README-frontend.md → README.md<br/>✅ workflow-frontend.yml → .github/workflows/ci.yml<br/>✅ CODEOWNERS → .github/CODEOWNERS"]
+
+        C4["project-beta-infra<br/>✅ README-infra.md → README.md<br/>✅ workflow-infra.yml → .github/workflows/ci.yml<br/>✅ CODEOWNERS → .github/CODEOWNERS"]
+    end
+
+    A1 --> B1
+    A1 --> B2
+    A2 --> B3
+    A2 --> B4
+
+    B1 -->|role: frontend| T1
+    B2 -->|role: backend| T2
+    B3 -->|role: frontend| T1
+    B4 -->|role: infra| T3
+
+    T1 -.->|copy| C1
+    T2 -.->|copy| C2
+    T1 -.->|copy| C3
+    T3 -.->|copy| C4
+    T4 -.->|copy to all| C1
+    T4 -.->|copy to all| C2
+    T4 -.->|copy to all| C3
+    T4 -.->|copy to all| C4
+
+    style Config fill:#e3f2fd
+    style Create fill:#fff3e0
+    style Templates fill:#f3e5f5
+    style Apply fill:#e8f5e9
+```
+
+### Role Extraction Logic
+
+The Makefile extracts the **role** from the repository configuration:
+
+| Config `name` | Repository Name | Template Used | Files Created |
+|---------------|-----------------|---------------|---------------|
+| `frontend` | `project-{name}-frontend` | `README-frontend.md`<br/>`workflow-frontend.yml` | `README.md`<br/>`.github/workflows/ci.yml`<br/>`.github/CODEOWNERS` |
+| `backend` | `project-{name}-backend` | `README-backend.md`<br/>`workflow-backend.yml` | `README.md`<br/>`.github/workflows/ci.yml`<br/>`.github/CODEOWNERS` |
+| `infra` | `project-{name}-infra` | `README-infra.md`<br/>`workflow-infra.yml` | `README.md`<br/>`.github/workflows/ci.yml`<br/>`.github/CODEOWNERS` |
+
+**Key Points:**
+- Repository role is determined by the `name` field in `project-config.json`
+- Template selection is automatic based on role name
+- CODEOWNERS is applied to all repositories regardless of role
+- All templates are committed to their respective repositories via git
+
+---
+
 ## How It Works
 
 ### Target: `check-prereqs`
