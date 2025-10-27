@@ -1,0 +1,16 @@
+# Environment variables
+.env
+
+# Temporary clone directories
+.tmp-repos/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
