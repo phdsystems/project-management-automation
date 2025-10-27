@@ -33,6 +33,12 @@ export
 # Configuration Variables
 # ============================================================================
 
+# Use bash as the shell for all commands (required for complex if/fi structures)
+SHELL := /bin/bash
+
+# Use .ONESHELL to execute all recipe lines in a single shell invocation
+.ONESHELL:
+
 # Path to JSON configuration file containing teams and projects
 CONFIG := project-config.json
 
