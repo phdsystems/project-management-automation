@@ -1,0 +1,44 @@
+{
+  "teams": [
+    "frontend-team",
+    "backend-team",
+    "infra-team"
+  ],
+  "projects": [
+    {
+      "name": "alpha",
+      "repos": [
+        {
+          "name": "frontend",
+          "team": "frontend-team",
+          "permission": "push"
+        },
+        {
+          "name": "backend",
+          "team": "backend-team",
+          "permission": "push"
+        },
+        {
+          "name": "infra",
+          "team": "infra-team",
+          "permission": "admin"
+        }
+      ]
+    },
+    {
+      "name": "beta",
+      "repos": [
+        {
+          "name": "frontend",
+          "team": "frontend-team",
+          "permission": "push"
+        },
+        {
+          "name": "backend",
+          "team": "backend-team",
+          "permission": "push"
+        }
+      ]
+    }
+  ]
+}

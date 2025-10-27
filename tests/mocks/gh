@@ -1,0 +1,184 @@
+#!/bin/bash
+# Mock gh CLI for testing
+# This script simulates GitHub CLI responses
+
+# Track calls for verification
+MOCK_LOG="${MOCK_LOG:-/tmp/gh-mock.log}"
+mkdir -p "$(dirname "$MOCK_LOG")"
+echo "$@" >> "$MOCK_LOG" 2>/dev/null || true
+
+# Parse command and subcommand
+CMD="$1"
+SUBCMD="$2"
+
+case "$CMD" in
+  "auth")
+    case "$SUBCMD" in
+      "status")
+        cat <<EOF
+github.com
+  ✓ Logged in to github.com account test-org (/home/user/.config/gh/hosts.yml)
+  - Active account: true
+  - Git operations protocol: ssh
+  - Token: ghp_************************************
+  - Token scopes: 'admin:org', 'admin:repo_hook', 'repo', 'user', 'workflow'
+EOF
+        exit 0
+        ;;
+    esac
+    ;;
+
+  "api")
+    ENDPOINT="${3#/}"  # Remove leading slash
+
+    case "$ENDPOINT" in
+      "users/"*)
+        # Extract username from path
+        USERNAME="${ENDPOINT#users/}"
+        if [[ "$USERNAME" == *"orgs"* ]]; then
+          echo "[]"
+          exit 0
+        fi
+
+        # Check if it's an organization check
+        if [[ "$TEST_ACCOUNT_TYPE" == "Organization" ]]; then
+          cat <<EOF
+{
+  "login": "test-org",
+  "type": "Organization",
+  "name": "Test Organization"
+}
+EOF
+        else
+          cat <<EOF
+{
+  "login": "test-user",
+  "type": "User",
+  "name": "Test User"
+}
+EOF
+        fi
+        exit 0
+        ;;
+
+      "orgs/"*"/teams")
+        if [[ "$TEST_ACCOUNT_TYPE" != "Organization" ]]; then
+          echo '{"message":"Not Found","documentation_url":"https://docs.github.com/rest/teams/teams#list-teams","status":"404"}' >&2
+          exit 1
+        fi
+
+        # Return list of teams
+        cat <<EOF
+[
+  {
+    "name": "test-team",
+    "slug": "test-team",
+    "id": 1,
+    "privacy": "closed"
+  }
+]
+EOF
+        exit 0
+        ;;
+
+      "orgs/"*"/teams/"*)
+        if [[ "$TEST_ACCOUNT_TYPE" != "Organization" ]]; then
+          echo '{"message":"Not Found","documentation_url":"https://docs.github.com/rest/teams/teams#get-a-team","status":"404"}' >&2
+          exit 1
+        fi
+
+        # Extract team name
+        TEAM_NAME="${ENDPOINT##*/}"
+
+        # Check if team exists
+        if [[ "$MOCK_TEAM_EXISTS" == "true" ]]; then
+          cat <<EOF
+{
+  "name": "$TEAM_NAME",
+  "slug": "$TEAM_NAME",
+  "id": 1,
+  "privacy": "closed"
+}
+EOF
+          exit 0
+        else
+          echo '{"message":"Not Found","status":"404"}' >&2
+          exit 1
+        fi
+        ;;
+
+      "user/orgs")
+        if [[ "$TEST_ACCOUNT_TYPE" == "Organization" ]]; then
+          cat <<EOF
+[
+  {
+    "login": "test-org",
+    "type": "Organization"
+  }
+]
+EOF
+        else
+          echo "[]"
+        fi
+        exit 0
+        ;;
+
+      *)
+        echo '{"message":"Not Found","status":"404"}' >&2
+        exit 1
+        ;;
+    esac
+    ;;
+
+  "repo")
+    case "$SUBCMD" in
+      "create")
+        # Extract repo name from arguments
+        REPO_NAME=""
+        for arg in "$@"; do
+          if [[ ! "$arg" =~ ^- ]] && [[ "$arg" != "repo" ]] && [[ "$arg" != "create" ]]; then
+            REPO_NAME="$arg"
+            break
+          fi
+        done
+
+        if [[ -z "$REPO_NAME" ]]; then
+          echo "Error: repository name required" >&2
+          exit 1
+        fi
+
+        echo "https://github.com/test-org/$REPO_NAME"
+        exit 0
+        ;;
+
+      "view")
+        REPO_NAME="$3"
+        if [[ "$MOCK_REPO_EXISTS" == "true" ]]; then
+          cat <<EOF
+{
+  "name": "test-repo",
+  "visibility": "PRIVATE",
+  "createdAt": "2025-10-27T09:00:00Z"
+}
+EOF
+          exit 0
+        else
+          echo "Error: repository not found" >&2
+          exit 1
+        fi
+        ;;
+
+      "delete")
+        # Simulate successful deletion
+        exit 0
+        ;;
+    esac
+    ;;
+
+  *)
+    echo "gh: unknown command: $CMD" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

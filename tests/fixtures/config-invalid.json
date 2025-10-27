@@ -1,0 +1,16 @@
+{
+  "teams": [
+    "test-team"
+  ],
+  "projects": [
+    {
+      "name": "broken",
+      "repos": [
+        {
+          "name": "frontend",
+          "team": "nonexistent-team",
+          "permission": "invalid-permission"
+        }
+      ]
+    }
+  ]
