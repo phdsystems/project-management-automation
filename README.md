@@ -105,6 +105,8 @@ project-management/
 | **[Test Report](doc/TEST-REPORT.md)** | Test results and findings |
 | **[Test Suite](src/test/README.md)** | Testing documentation for contributors |
 | **[CI Parallelization](doc/ci-parallelization-strategies.md)** | GitHub Actions optimization strategies |
+| **[Local Setup](doc/4-development/local-setup.md)** | Development environment setup (GitHub/Gitea) |
+| **[Developer Guide](doc/4-development/developer-guide.md)** | Contributing guide, architecture, code style |
 
 ## Common Commands
 
