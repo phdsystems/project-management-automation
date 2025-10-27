@@ -108,7 +108,7 @@ validation::check_prerequisites() {
 
     # Check Gitea authentication
     if command -v tea >/dev/null 2>&1; then
-      if ! tea login list >/dev/null 2>&1 || ! tea login list 2>/dev/null | grep -q '^\*'; then
+      if ! tea login list >/dev/null 2>&1 || ! tea login list 2>/dev/null | grep -q "true"; then
         output::error "Not authenticated with Gitea"
         output::info "Run: tea login add"
         ((errors++))

@@ -31,6 +31,28 @@ gitea::ensure_org() {
   fi
 }
 
+# Get Gitea API URL and token from tea config
+gitea::get_api_info() {
+  local url token tea_config
+  tea_config="${XDG_CONFIG_HOME:-$HOME/.config}/tea/config.yml"
+
+  if [[ ! -f "$tea_config" ]]; then
+    return 1
+  fi
+
+  # Get default login info from config
+  url=$(grep -A 8 "default: true" "$tea_config" | grep "url:" | head -1 | awk '{print $2}')
+  token=$(grep -A 8 "default: true" "$tea_config" | grep "token:" | head -1 | awk '{print $2}')
+
+  if [[ -z "$url" || -z "$token" ]]; then
+    # Try to get first login if no default
+    url=$(grep "url:" "$tea_config" | head -1 | awk '{print $2}')
+    token=$(grep "token:" "$tea_config" | head -1 | awk '{print $2}')
+  fi
+
+  echo "${url}|${token}"
+}
+
 # Create Gitea team
 gitea::create_team() {
   local org="$1"
@@ -42,19 +64,40 @@ gitea::create_team() {
     return 0
   fi
 
+  # Get API info
+  local api_info url token
+  api_info=$(gitea::get_api_info)
+  url=$(echo "$api_info" | cut -d'|' -f1)
+  token=$(echo "$api_info" | cut -d'|' -f2)
+
+  if [[ -z "$url" || -z "$token" ]]; then
+    output::error "Failed to get Gitea API credentials"
+    return 1
+  fi
+
   # Check if team already exists
-  if tea teams list --organization "$org" 2>/dev/null | grep -q "^${team}$"; then
+  local teams_response
+  teams_response=$(curl -s -H "Authorization: token $token" "${url}/api/v1/orgs/${org}/teams" 2>/dev/null)
+  if echo "$teams_response" | jq -e ".[] | select(.name == \"$team\")" >/dev/null 2>&1; then
     output::info "Team already exists: $team"
     return 0
   fi
 
   output::info "Creating team: $team"
-  # tea teams create --org ORG --name NAME --description DESC [--permission read|write|admin]
-  if tea teams create --organization "$org" --name "$team" >/dev/null 2>&1; then
+  # Create team via API
+  local response
+  response=$(curl -s -X POST "${url}/api/v1/orgs/${org}/teams" \
+    -H "Authorization: token $token" \
+    -H "Content-Type: application/json" \
+    -d "{\"name\":\"$team\",\"permission\":\"write\",\"units\":[\"repo.code\",\"repo.issues\",\"repo.pulls\"]}" \
+    2>&1)
+
+  if echo "$response" | jq -e '.name' >/dev/null 2>&1; then
     output::success "Team created: $team"
     return 0
   else
     output::error "Failed to create team: $team"
+    output::debug "API response: $response"
     return 1
   fi
 }
@@ -140,17 +183,18 @@ gitea::clone_repo() {
 
   output::debug "Cloning repository: $org/$repo to $dest"
 
-  # Get Gitea instance URL from tea config
-  local gitea_url
-  gitea_url=$(tea login list 2>/dev/null | grep '^\*' | awk '{print $2}')
+  # Get API info (includes URL)
+  local api_info url
+  api_info=$(gitea::get_api_info)
+  url=$(echo "$api_info" | cut -d'|' -f1)
 
-  if [[ -z "$gitea_url" ]]; then
+  if [[ -z "$url" ]]; then
     output::error "No active tea login found. Run: tea login add"
     return 1
   fi
 
   # Clone using git with Gitea URL
-  if git clone "${gitea_url}/${org}/${repo}.git" "$dest" >/dev/null 2>&1; then
+  if git clone "${url}/${org}/${repo}.git" "$dest" >/dev/null 2>&1; then
     output::debug "Repository cloned successfully"
     return 0
   else
@@ -187,15 +231,16 @@ gitea::commit_and_push() {
 
 # Get Gitea instance URL
 gitea::get_url() {
-  tea login list 2>/dev/null | grep '^\*' | awk '{print $2}'
+  local api_info
+  api_info=$(gitea::get_api_info)
+  echo "$api_info" | cut -d'|' -f1
 }
 
 # Check Gitea authentication
 gitea::check_auth() {
   if tea login list >/dev/null 2>&1; then
-    local active_login
-    active_login=$(tea login list 2>/dev/null | grep '^\*')
-    if [[ -n "$active_login" ]]; then
+    # Check if there's a default login (true in DEFAULT column)
+    if tea login list 2>/dev/null | grep -q "true"; then
       return 0
     fi
   fi
