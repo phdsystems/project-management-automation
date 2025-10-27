@@ -1,11 +1,11 @@
-# Architecture Design - GitHub Organization Automation
+# Architecture Design - Git Platform Organization Automation
 
 **Date:** 2025-10-27
-**Version:** 2.0.0
+**Version:** 2.1.0
 
 ## TL;DR
 
-**Architecture**: Makefile-based automation orchestrating GitHub CLI operations with template processing. **Key patterns**: Configuration-driven → Idempotent operations → Template matching by convention → Progressive execution (teams → repos → files). **Critical design**: Stateless execution, no database, relies entirely on GitHub API as source of truth.
+**Architecture**: Multi-platform automation supporting both GitHub and Gitea via backend abstraction layer. **Two interfaces**: Makefile (legacy) and CLI tool (gh-org). **Key patterns**: Backend routing → Configuration-driven → Idempotent operations → Template matching by convention. **Critical design**: Stateless execution, platform-agnostic via router pattern, supports gh and tea CLI tools interchangeably.
 
 ---
 
@@ -13,10 +13,13 @@
 
 - [Overview](#overview)
 - [System Architecture](#system-architecture)
+- [CLI Architecture](#cli-architecture)
+- [Backend Abstraction Architecture](#backend-abstraction-architecture)
 - [Component Architecture](#component-architecture)
 - [Data Flow](#data-flow)
 - [Technology Stack](#technology-stack)
 - [Design Patterns](#design-patterns)
+- [Usage Examples](#usage-examples)
 - [Deployment Architecture](#deployment-architecture)
 - [Scalability](#scalability)
 - [Security Architecture](#security-architecture)
@@ -27,21 +30,23 @@
 
 ### System Purpose
 
-Automate the creation and configuration of GitHub teams, repositories, and standard files across multiple projects within a GitHub Organization.
+Automate the creation and configuration of teams, repositories, and standard files across multiple projects within Git platform organizations. Supports both GitHub (cloud/enterprise) and Gitea (self-hosted) with identical configuration and commands.
 
 ### Architecture Goals
 
-1. **Simplicity** - Single Makefile, no complex dependencies
-2. **Idempotency** - Safe to run multiple times
-3. **Transparency** - Clear, readable automation steps
-4. **Flexibility** - Configuration-driven, easy to customize
-5. **Reliability** - Fail-fast with clear error messages
+1. **Platform Agnostic** - Support GitHub and Gitea with same config
+2. **Simplicity** - Minimal dependencies, clear structure
+3. **Idempotency** - Safe to run multiple times
+4. **Transparency** - Clear, readable automation steps
+5. **Flexibility** - Configuration-driven, easy to customize
+6. **Reliability** - Fail-fast with clear error messages
 
 ### Architecture Principles
 
+- **Backend Abstraction** - Platform-specific logic isolated via router pattern
 - **Configuration over Code** - JSON config drives all operations
 - **Convention over Configuration** - Template matching by naming
-- **Stateless Operation** - GitHub API is source of truth
+- **Stateless Operation** - Platform API is source of truth (GitHub/Gitea)
 - **Progressive Enhancement** - Build incrementally (teams → repos → files)
 - **Fail-Fast** - Validate early, exit on error
 
@@ -126,6 +131,294 @@ graph TB
     style ConfigParser fill:#f3e5f5
     style GitHubCLI fill:#c8e6c9
     style GitHub fill:#ffecb3
+```
+
+---
+
+## CLI Architecture
+
+### CLI Tool Structure
+
+The `gh-org` CLI tool follows a modular design inspired by GitHub CLI:
+
+```mermaid
+graph TB
+    subgraph "Entry Point"
+        MAIN[gh-org<br/>Main Script]
+    end
+
+    subgraph "Command Layer (cmd/)"
+        CHECK[check.sh<br/>Prerequisites]
+        TEAMS[teams.sh<br/>Team Management]
+        REPOS[repos.sh<br/>Repository Management]
+        FILES[files.sh<br/>File Templates]
+        SETUP[setup.sh<br/>Complete Setup]
+    end
+
+    subgraph "Core Logic (pkg/)"
+        CONFIG[config.sh<br/>Configuration]
+        BACKEND[backend.sh<br/>Backend Router]
+        GITHUB[github.sh<br/>GitHub API]
+        GITEA[gitea.sh<br/>Gitea API]
+        TEMPLATES[templates.sh<br/>Template Engine]
+    end
+
+    subgraph "Utilities (internal/)"
+        OUTPUT[output.sh<br/>Pretty Output]
+        VALIDATION[validation.sh<br/>Prerequisites]
+    end
+
+    MAIN --> CHECK
+    MAIN --> TEAMS
+    MAIN --> REPOS
+    MAIN --> FILES
+    MAIN --> SETUP
+
+    TEAMS --> BACKEND
+    REPOS --> BACKEND
+    FILES --> BACKEND
+    SETUP --> TEAMS
+    SETUP --> REPOS
+    SETUP --> FILES
+
+    BACKEND --> GITHUB
+    BACKEND --> GITEA
+
+    GITHUB --> OUTPUT
+    GITEA --> OUTPUT
+    CONFIG --> OUTPUT
+    TEMPLATES --> OUTPUT
+
+    CHECK --> VALIDATION
+    BACKEND --> CONFIG
+
+    style MAIN fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    style BACKEND fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style GITHUB fill:#c8e6c9
+    style GITEA fill:#c8e6c9
+```
+
+### CLI Command Hierarchy
+
+```mermaid
+graph LR
+    subgraph "gh-org CLI"
+        ROOT[gh-org]
+    end
+
+    subgraph "Commands"
+        CHECK[check]
+        TEAMS[teams]
+        REPOS[repos]
+        FILES[files]
+        SETUP[setup]
+    end
+
+    subgraph "Subcommands"
+        TEAMS_CREATE[create]
+        REPOS_CREATE[create]
+        FILES_README[readme]
+        FILES_WORKFLOW[workflow]
+        FILES_CODEOWNERS[codeowners]
+    end
+
+    ROOT --> CHECK
+    ROOT --> TEAMS
+    ROOT --> REPOS
+    ROOT --> FILES
+    ROOT --> SETUP
+
+    TEAMS --> TEAMS_CREATE
+    REPOS --> REPOS_CREATE
+    FILES --> FILES_README
+    FILES --> FILES_WORKFLOW
+    FILES --> FILES_CODEOWNERS
+
+    style ROOT fill:#e3f2fd
+    style SETUP fill:#c8e6c9
+```
+
+### CLI Execution Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI as gh-org
+    participant Cmd as Command Handler
+    participant Backend as Backend Router
+    participant API as GitHub/Gitea API
+
+    User->>CLI: gh-org teams create
+    CLI->>CLI: Parse arguments
+    CLI->>Cmd: cmd::teams::run()
+    Cmd->>Cmd: Load .env config
+    Cmd->>Cmd: Parse project-config.json
+    Cmd->>Backend: backend::create_team()
+    Backend->>Backend: Check BACKEND env var
+    alt BACKEND=github
+        Backend->>API: gh api POST /orgs/{org}/teams
+    else BACKEND=gitea
+        Backend->>API: tea teams create --org {org}
+    end
+    API-->>Backend: Response
+    Backend-->>Cmd: Success/Failure
+    Cmd-->>CLI: Exit code
+    CLI-->>User: Output message
+```
+
+---
+
+## Backend Abstraction Architecture
+
+### Backend Router Pattern
+
+The system uses a router pattern to support multiple Git platforms:
+
+```mermaid
+graph TB
+    subgraph "Application Layer"
+        CMD[Commands<br/>teams, repos, files]
+    end
+
+    subgraph "Abstraction Layer"
+        ROUTER[Backend Router<br/>backend.sh]
+        CONFIG[Config Detection<br/>BACKEND env var]
+    end
+
+    subgraph "Implementation Layer"
+        GITHUB[GitHub Backend<br/>github.sh]
+        GITEA[Gitea Backend<br/>gitea.sh]
+    end
+
+    subgraph "External APIs"
+        GH_API[GitHub API<br/>gh CLI]
+        TEA_API[Gitea API<br/>tea CLI]
+    end
+
+    CMD --> ROUTER
+    CONFIG -.-> ROUTER
+
+    ROUTER -->|BACKEND=github| GITHUB
+    ROUTER -->|BACKEND=gitea| GITEA
+
+    GITHUB --> GH_API
+    GITEA --> TEA_API
+
+    style ROUTER fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style CONFIG fill:#ffecb3
+    style GITHUB fill:#c8e6c9
+    style GITEA fill:#c8e6c9
+```
+
+### Permission Mapping Architecture
+
+GitHub and Gitea have different permission models. The system automatically maps them:
+
+```mermaid
+graph LR
+    subgraph "User Configuration"
+        CONFIG[project-config.json<br/>permission: push/pull/admin/etc]
+    end
+
+    subgraph "Backend Router"
+        ROUTER[backend::assign_team<br/>permission param]
+    end
+
+    subgraph "GitHub Backend"
+        GH[github::assign_team<br/>Direct: pull/push/admin]
+    end
+
+    subgraph "Gitea Backend"
+        GITEA[gitea::assign_team<br/>Mapping Logic]
+        MAP{Permission<br/>Mapping}
+    end
+
+    subgraph "Mapped Permissions"
+        READ[pull → read]
+        WRITE[push/triage/maintain → write]
+        ADMIN[admin → admin]
+    end
+
+    CONFIG --> ROUTER
+    ROUTER -->|github| GH
+    ROUTER -->|gitea| GITEA
+
+    GITEA --> MAP
+    MAP --> READ
+    MAP --> WRITE
+    MAP --> ADMIN
+
+    style MAP fill:#fff9c4
+    style ROUTER fill:#fff3e0
+```
+
+**Permission Mapping Table:**
+
+| GitHub Permission | Gitea Permission | Access Level |
+|-------------------|------------------|--------------|
+| `pull` | `read` | Read-only |
+| `push` | `write` | Read + write |
+| `triage` | `write` | Read + write + issues |
+| `maintain` | `write` | Read + write + issues |
+| `admin` | `admin` | Full control |
+
+### Backend Detection Flow
+
+```mermaid
+flowchart TD
+    START[Command Execution] --> LOAD[Load .env file]
+    LOAD --> CHECK{BACKEND<br/>variable set?}
+
+    CHECK -->|Yes| DETECT[Use BACKEND value]
+    CHECK -->|No| DEFAULT[Default to 'github']
+
+    DETECT --> GITHUB{BACKEND<br/>== 'github'?}
+    DEFAULT --> GITHUB
+
+    GITHUB -->|Yes| GH_CLI[Use GitHub Backend<br/>pkg/github.sh<br/>gh CLI]
+    GITHUB -->|No| TEA_CLI[Use Gitea Backend<br/>pkg/gitea.sh<br/>tea CLI]
+
+    GH_CLI --> EXEC[Execute Operation]
+    TEA_CLI --> EXEC
+
+    style CHECK fill:#fff9c4
+    style GITHUB fill:#fff9c4
+    style GH_CLI fill:#c8e6c9
+    style TEA_CLI fill:#c8e6c9
+```
+
+### Backend Implementation Comparison
+
+```mermaid
+graph TB
+    subgraph "Operation: Create Repository"
+        OP[backend::create_repo<br/>org, repo, dry_run]
+    end
+
+    subgraph "GitHub Implementation"
+        GH1[Check if exists:<br/>gh repo view org/repo]
+        GH2[Create if needed:<br/>gh repo create org/repo --private]
+        GH3[Return success/failure]
+    end
+
+    subgraph "Gitea Implementation"
+        GT1[Check if exists:<br/>tea repos list --org org]
+        GT2[Create if needed:<br/>tea repos create --name repo --owner org]
+        GT3[Return success/failure]
+    end
+
+    OP -->|github| GH1
+    OP -->|gitea| GT1
+
+    GH1 --> GH2
+    GH2 --> GH3
+
+    GT1 --> GT2
+    GT2 --> GT3
+
+    style OP fill:#fff3e0
+    style GH3 fill:#c8e6c9
+    style GT3 fill:#c8e6c9
 ```
 
 ---
@@ -428,6 +721,270 @@ flowchart TD
 - Easy to debug
 - Can run stages individually
 - Fail at any stage, recover easily
+
+---
+
+## Usage Examples
+
+### Example 1: GitHub Setup (Cloud)
+
+**Configuration (.env):**
+```bash
+# GitHub organization
+ORG=my-company
+BACKEND=github  # or omit (default)
+```
+
+**Execution:**
+```bash
+# Check prerequisites
+./src/main/cli/gh-org check
+# Output: ✓ GitHub CLI (gh) installed
+#         ✓ Authenticated with GitHub
+#         ✓ Configuration valid
+
+# Create teams
+./src/main/cli/gh-org teams create
+# Output: Creating GitHub teams
+#         ℹ Creating team: frontend-team
+#         ✓ Team created: frontend-team
+#         ℹ Creating team: backend-team
+#         ✓ Team created: backend-team
+
+# Create repositories
+./src/main/cli/gh-org repos create
+# Output: Creating repositories
+#         ℹ Processing: project-alpha-frontend
+#         ✓ Repository created: project-alpha-frontend
+#         ✓ Team assigned: frontend-team -> project-alpha-frontend
+
+# Complete setup (all operations)
+./src/main/cli/gh-org setup
+```
+
+### Example 2: Gitea Setup (Self-Hosted)
+
+**Configuration (.env):**
+```bash
+# Gitea organization (self-hosted)
+ORG=my-team
+BACKEND=gitea
+```
+
+**Prerequisites:**
+```bash
+# Install tea CLI
+wget https://dl.gitea.com/tea/0.9.2/tea-0.9.2-linux-amd64 -O tea
+chmod +x tea
+sudo mv tea /usr/local/bin/
+
+# Authenticate with Gitea
+tea login add
+# URL: https://gitea.mycompany.com
+# Username: admin
+# Token: (create in Settings → Applications)
+```
+
+**Execution:**
+```bash
+# Check prerequisites
+./src/main/cli/gh-org check
+# Output: ✓ tea CLI installed
+#         ✓ Authenticated with Gitea
+#         ✓ Configuration valid
+
+# Create teams
+./src/main/cli/gh-org teams create
+# Output: Creating Gitea teams
+#         ℹ Creating team: frontend-team
+#         ✓ Team created: frontend-team
+#         ℹ Creating team: backend-team
+#         ✓ Team created: backend-team
+
+# Same commands as GitHub!
+./src/main/cli/gh-org repos create
+./src/main/cli/gh-org files readme
+./src/main/cli/gh-org setup
+```
+
+### Example 3: Multi-Platform Configuration
+
+**Scenario:** Maintain identical structure on both platforms.
+
+**Setup:**
+```bash
+# Create separate environment files
+cp .env .env.github
+cp .env .env.gitea
+
+# Configure for GitHub
+echo "ORG=my-github-org" > .env.github
+echo "BACKEND=github" >> .env.github
+
+# Configure for Gitea
+echo "ORG=my-gitea-org" > .env.gitea
+echo "BACKEND=gitea" >> .env.gitea
+
+# Same project-config.json for both!
+```
+
+**Deploy to GitHub:**
+```bash
+cp .env.github .env
+./src/main/cli/gh-org setup
+# Creates structure on GitHub
+```
+
+**Deploy to Gitea:**
+```bash
+cp .env.gitea .env
+./src/main/cli/gh-org setup
+# Creates identical structure on Gitea
+```
+
+### Example 4: Dry-Run Mode (Preview Changes)
+
+```bash
+# Preview what would happen without executing
+./src/main/cli/gh-org teams create --dry-run
+# Output: [DRY RUN] Would create team: frontend-team
+#         [DRY RUN] Would create team: backend-team
+
+./src/main/cli/gh-org repos create --dry-run
+# Output: [DRY RUN] Would create repository: project-alpha-frontend
+#         [DRY RUN] Would assign team 'frontend-team' with 'push' permission
+
+./src/main/cli/gh-org setup --dry-run
+# Preview complete setup without changes
+```
+
+### Example 5: Incremental Operations
+
+```bash
+# Add new team to existing organization
+# 1. Update project-config.json
+echo '{"teams": ["frontend-team", "backend-team", "infra-team"]}' | jq
+
+# 2. Create only the new team
+./src/main/cli/gh-org teams create
+# Output: ✓ Team already exists: frontend-team
+#         ✓ Team already exists: backend-team
+#         ℹ Creating team: infra-team
+#         ✓ Team created: infra-team
+
+# 3. Add repository for new team
+# Update project-config.json with new repo
+
+./src/main/cli/gh-org repos create
+# Output: ✓ Repository already exists: project-alpha-frontend
+#         ℹ Creating repository: project-alpha-infra
+#         ✓ Repository created: project-alpha-infra
+```
+
+### Example 6: Permission Mapping (Gitea)
+
+**Configuration:**
+```json
+{
+  "projects": [{
+    "name": "alpha",
+    "repos": [
+      {"name": "frontend", "team": "frontend-team", "permission": "pull"},
+      {"name": "backend", "team": "backend-team", "permission": "push"},
+      {"name": "infra", "team": "infra-team", "permission": "admin"}
+    ]
+  }]
+}
+```
+
+**GitHub Execution:**
+```bash
+BACKEND=github ./src/main/cli/gh-org repos create
+# Permissions applied as-is:
+# - frontend-team: pull (read-only)
+# - backend-team: push (read + write)
+# - infra-team: admin (full control)
+```
+
+**Gitea Execution:**
+```bash
+BACKEND=gitea ./src/main/cli/gh-org repos create
+# Permissions automatically mapped:
+# - frontend-team: read (mapped from pull)
+# - backend-team: write (mapped from push)
+# - infra-team: admin (no mapping needed)
+```
+
+### Example 7: Makefile Interface (Legacy)
+
+The original Makefile interface still works:
+
+```bash
+# Using Makefile (GitHub only currently)
+cd src/main
+make all
+
+# Individual operations
+make teams
+make repos
+make readmes
+
+# Dry-run
+make all DRY_RUN=1
+
+# Clean temporary files
+make clean
+```
+
+**Note:** For Gitea support, use the CLI tool (`gh-org`) instead.
+
+### Example 8: CI/CD Integration
+
+**GitHub Actions:**
+```yaml
+name: Setup Organization
+
+on:
+  push:
+    paths:
+      - 'project-config.json'
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup gh CLI
+        run: |
+          gh auth login --with-token <<< "${{ secrets.GH_TOKEN }}"
+
+      - name: Run automation
+        run: |
+          ./src/main/cli/gh-org check
+          ./src/main/cli/gh-org setup
+        env:
+          ORG: ${{ secrets.ORG_NAME }}
+          BACKEND: github
+```
+
+**GitLab CI (for Gitea):**
+```yaml
+setup_gitea:
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git jq bash
+    - wget https://dl.gitea.com/tea/0.9.2/tea-0.9.2-linux-amd64 -O /usr/local/bin/tea
+    - chmod +x /usr/local/bin/tea
+    - echo "$GITEA_TOKEN" | tea login add --url $GITEA_URL --token -
+  script:
+    - ./src/main/cli/gh-org setup
+  variables:
+    ORG: "my-org"
+    BACKEND: "gitea"
+  only:
+    - main
+```
 
 ---
 
@@ -745,6 +1302,91 @@ graph TB
 
 ---
 
+### ADR-006: Backend Abstraction Layer
+
+**Status:** Accepted
+
+**Context:** Need to support both GitHub and self-hosted Gitea with minimal code duplication and identical user experience.
+
+**Decision:** Implement backend abstraction layer using router pattern with separate implementations for GitHub (gh CLI) and Gitea (tea CLI).
+
+**Rationale:**
+- Same configuration works for both platforms
+- Backend selection via environment variable (BACKEND=github/gitea)
+- Platform-specific logic isolated in separate modules
+- Commands remain identical regardless of backend
+- Permission mapping handled transparently
+- Easy to add new backends in future
+
+**Architecture:**
+```
+Commands → Backend Router → [GitHub Implementation | Gitea Implementation]
+                                        ↓                      ↓
+                                    gh CLI                 tea CLI
+```
+
+**Consequences:**
+- ✅ Platform-agnostic configuration (project-config.json)
+- ✅ Identical commands for GitHub and Gitea
+- ✅ Automatic permission mapping (5 GitHub levels → 3 Gitea levels)
+- ✅ Easy to test (switch backend via env var)
+- ✅ Future-proof (can add GitLab, Bitbucket, etc.)
+- ❌ Requires both gh and tea CLI if using both platforms
+- ❌ Slight complexity in router layer
+- ❌ Must maintain two implementations
+
+**Implementation Files:**
+- `pkg/backend.sh` - Router that dispatches to correct backend
+- `pkg/github.sh` - GitHub API operations using gh CLI
+- `pkg/gitea.sh` - Gitea API operations using tea CLI
+- `pkg/config.sh` - Backend detection and configuration
+- `internal/validation.sh` - Backend-specific prerequisite checks
+
+---
+
+### ADR-007: CLI Tool as Primary Interface
+
+**Status:** Accepted
+
+**Context:** Makefile interface lacks structure for multi-backend support and complex logic.
+
+**Decision:** Create dedicated CLI tool (gh-org) following GitHub CLI design patterns.
+
+**Rationale:**
+- Modular structure (cmd/, pkg/, internal/)
+- Better separation of concerns
+- Easier to test individual components
+- Natural place for backend abstraction
+- Subcommand architecture scales better
+- Consistent with modern CLI conventions
+
+**Architecture:**
+```
+gh-org (entry point)
+├── cmd/          Command handlers (teams, repos, files, setup, check)
+├── pkg/          Core logic (backend, github, gitea, config, templates)
+└── internal/     Utilities (output, validation)
+```
+
+**Consequences:**
+- ✅ Clean modular architecture
+- ✅ Easy to add new commands
+- ✅ Better error handling and output
+- ✅ Testable components
+- ✅ Follows industry conventions
+- ❌ Makefile becomes legacy (but still supported)
+- ❌ More files to maintain
+- ❌ Learning curve for contributors
+
+**Commands:**
+- `gh-org check` - Validate prerequisites
+- `gh-org teams create` - Create teams
+- `gh-org repos create` - Create repositories
+- `gh-org files {readme|workflow|codeowners}` - Apply templates
+- `gh-org setup` - Complete automation
+
+---
+
 ## Future Architecture Enhancements
 
 ### Planned Improvements
@@ -787,4 +1429,4 @@ graph TB
 ---
 
 *Last Updated: 2025-10-27*
-*Version: 2.0.0*
+*Version: 2.1.0*

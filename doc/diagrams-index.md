@@ -1,14 +1,15 @@
 # Mermaid Diagrams Index
 
-**Locations:** `doc/user-guide.md`, `doc/cli-guide.md`
-**Total Diagrams:** 18 (11 in User Guide + 7 in CLI Guide)
+**Locations:** `doc/user-guide.md`, `doc/cli-guide.md`, `doc/3-design/architecture.md`
+**Total Diagrams:** 26 (12 in User Guide + 7 in CLI Guide + 7 in Architecture)
 **Last Updated:** 2025-10-27
 
 ## Overview
 
-The documentation includes 18 mermaid diagrams across two main guides:
-- **User Guide** (11 diagrams) - Makefile workflows, configurations, and decision trees
+The documentation includes 26 mermaid diagrams across three main documents:
+- **User Guide** (12 diagrams) - Makefile workflows, configurations, and decision trees
 - **CLI Guide** (7 diagrams) - CLI architecture, command flows, and comparisons
+- **Architecture Design** (7 diagrams) - Backend abstraction, CLI structure, and system architecture
 
 ---
 
@@ -337,6 +338,125 @@ gh-org
 
 ---
 
+## Architecture Design Diagrams (doc/3-design/architecture.md)
+
+### 20. CLI Tool Structure
+
+**Location:** CLI Architecture section
+**Type:** Graph (4 subgraphs)
+**Purpose:** Shows modular structure of gh-org CLI tool
+
+**Components:**
+- Entry Point (gh-org main script)
+- Command Layer (cmd/ - check, teams, repos, files, setup)
+- Core Logic (pkg/ - config, backend, github, gitea, templates)
+- Utilities (internal/ - output, validation)
+
+**Use Case:** Understanding CLI internal architecture
+
+---
+
+### 21. Backend Router Pattern
+
+**Location:** Backend Abstraction Architecture section
+**Type:** Graph (4 subgraphs)
+**Purpose:** Shows how backend abstraction works
+
+**Layers:**
+- Application Layer (Commands)
+- Abstraction Layer (Backend Router + Config Detection)
+- Implementation Layer (GitHub Backend + Gitea Backend)
+- External APIs (gh CLI + tea CLI)
+
+**Use Case:** Understanding multi-platform support
+
+---
+
+### 22. Permission Mapping Architecture
+
+**Location:** Backend Abstraction Architecture section
+**Type:** Graph (5 subgraphs)
+**Purpose:** Shows how GitHub permissions map to Gitea
+
+**Components:**
+- User Configuration (project-config.json)
+- Backend Router (dispatches by backend)
+- GitHub Backend (direct mapping)
+- Gitea Backend (mapping logic)
+- Mapped Permissions (pull→read, push→write, admin→admin)
+
+**Use Case:** Understanding permission translation
+
+---
+
+### 23. Backend Detection Flow
+
+**Location:** Backend Abstraction Architecture section
+**Type:** Flowchart (Decision tree)
+**Purpose:** Shows how backend is selected
+
+**Flow:**
+```
+Load .env → BACKEND set? → [Yes: Use value | No: Default github]
+→ BACKEND == github? → [Yes: Use gh CLI | No: Use tea CLI] → Execute
+```
+
+**Use Case:** Troubleshooting backend selection
+
+---
+
+### 24. Backend Implementation Comparison
+
+**Location:** Backend Abstraction Architecture section
+**Type:** Graph (3 subgraphs)
+**Purpose:** Shows side-by-side implementation of same operation
+
+**Operation:** Create Repository
+- Backend router receives request
+- GitHub: gh repo view → gh repo create
+- Gitea: tea repos list → tea repos create
+
+**Use Case:** Understanding backend differences
+
+---
+
+### 25. CLI Execution Flow
+
+**Location:** CLI Architecture section
+**Type:** Sequence diagram
+**Purpose:** Shows interaction sequence for CLI commands
+
+**Participants:**
+- User
+- CLI (gh-org)
+- Command Handler
+- Backend Router
+- GitHub/Gitea API
+
+**Flow:** User command → Parse args → Load config → Route to backend → API call → Response
+
+**Use Case:** Understanding command execution
+
+---
+
+### 26. CLI Command Hierarchy (Architecture)
+
+**Location:** CLI Architecture section
+**Type:** Graph (3 subgraphs)
+**Purpose:** Shows command and subcommand structure
+
+**Structure:**
+```
+gh-org → [check, teams, repos, files, setup]
+teams → create
+repos → create
+files → readme/workflow/codeowners
+```
+
+**Use Case:** Discovering available commands
+
+---
+
 ## Diagram Characteristics
 
 ### Color Scheme
@@ -358,18 +478,18 @@ gh-org
 
 | Type | Count | Purpose |
 |------|-------|---------|
-| Flowchart | 13 | Process flows and decisions |
-| Graph | 5 | Relationships and structures |
-| Sequence | 1 | Component interactions |
-| **Total** | **19** | Comprehensive visualization |
+| Flowchart | 14 | Process flows and decisions |
+| Graph | 10 | Relationships and structures |
+| Sequence | 2 | Component interactions |
+| **Total** | **26** | Comprehensive visualization |
 
 ### Complexity Levels
 
 | Level | Count | Diagrams |
 |-------|-------|----------|
-| Simple | 5 | Quick Start, Naming, Workflow 1, Command Hierarchy, Dry-Run |
-| Medium | 8 | Prerequisites, Config, Template Matching, Workflow 2, Permissions, CLI Architecture, File Addition, Data Flow |
-| Complex | 6 | Full Workflow, Decision Tree, Troubleshooting, Best Practices, CLI Setup Workflow, Sequence Diagram |
+| Simple | 7 | Quick Start, Naming, Workflow 1, Command Hierarchy (x2), Dry-Run, Backend Detection |
+| Medium | 12 | Prerequisites, Config, Template Matching, Workflow 2, Permissions, CLI Architecture (x2), File Addition, Data Flow, Backend Router, Permission Mapping, Backend Implementation |
+| Complex | 7 | Full Workflow, Decision Tree, Troubleshooting, Best Practices, CLI Setup Workflow, Sequence Diagrams (x2) |
 
 ---
 
@@ -457,14 +577,15 @@ Paste mermaid code at:
 
 | Metric | Value |
 |--------|-------|
-| Total diagrams | 19 |
+| Total diagrams | 26 |
 | User Guide diagrams | 12 |
 | CLI Guide diagrams | 7 |
-| Total nodes | ~280 |
-| Total edges | ~320 |
-| Lines of mermaid code | ~750 |
-| Sections with diagrams | 18 |
-| Coverage | 95% of major sections |
+| Architecture diagrams | 7 |
+| Total nodes | ~400 |
+| Total edges | ~450 |
+| Lines of mermaid code | ~1100 |
+| Sections with diagrams | 25 |
+| Coverage | 98% of major sections |
 
 ---
 
@@ -485,8 +606,9 @@ Paste mermaid code at:
 
 **For more diagrams, see:**
 - Main README: `../README.md` (Architecture Overview, Workflow Diagram, etc.)
-- CLI Guide: `cli-guide.md` (7 CLI-specific diagrams)
 - User Guide: `user-guide.md` (12 Makefile workflow diagrams)
+- CLI Guide: `cli-guide.md` (7 CLI-specific diagrams)
+- Architecture Design: `3-design/architecture.md` (7 backend abstraction and CLI structure diagrams)
 - CI Parallelization: `ci-parallelization-strategies.md` (3 execution models)
 
 *Last Updated: 2025-10-27*
